@@ -14,19 +14,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function App() {
+  const [isLoading, setIsLoading] = r.useState(false);
   const [dataConfirmed, setDataConfirmed] = r.useState(null);
   const [dataDeaths, setDataDeaths] = r.useState(null);
   const [dataRecovered, setDataRecovered] = r.useState(null);
   r.useEffect(() => {
+    setIsLoading(true);
     fetch(dataConfirmedURL)
       .then(response => response.text())
-      .then(data => setDataConfirmed(data));
+      .then(data => setDataConfirmed(data))
+      .then(() => setIsLoading(false));
   }, []);
-  return e('div', null, dataConfirmed);
+  if (isLoading) {
+    return e(Spinner);
+  }
+  return e('div', null, 'data');
 }
 
 function Button({onClick = () => {}, children = null}) {
   const type = 'button';
   const className = 'btn btn-dark';
   return e('button', {type, className, onClick}, children);
+}
+
+function Spinner() {
+  return e('div', {className: 'spinner-border'});
 }
