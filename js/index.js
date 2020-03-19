@@ -42,10 +42,7 @@ function CovidChart({
     const labels = covidData[covidDataTypes.confirmed.key][0].slice(4);
     new Chart(ctx, {
       type: 'line',
-      data: {
-        labels,
-        datasets,
-      },
+      data: {labels, datasets},
       options: {},
     });
   }, [types, countries]);
