@@ -35,8 +35,9 @@ const covidDataTypes = {
 
 const covidCountries = {
   all: {
-    key: 'all',
-    title: 'All',
+    key: 'global',
+    title: 'Global',
+    index: 0,
   }
 };
 
@@ -53,12 +54,18 @@ function loadCovidData() {
       const dataType = Object.keys(covidDataTypes)[index];
       const parsedData = Papa.parse(val).data;
       dataContainer.labels = parsedData.shift();
-      dataContainer.timeSeries[dataType] = parsedData.map(row => {
+      const allCountriesSummary = ['', covidCountries.all.title, '', ''];
+      dataContainer.timeSeries[dataType] = parsedData.map((row, rowIndex) => {
         return row.map((cell, cellIndex) => {
           if (cellIndex < covidDataSchema.dateStartColumn) {return cell;}
-          return parseInt(cell, 10);
+          const cellAsNumber = parseInt(cell, 10);
+          allCountriesSummary[cellIndex] = allCountriesSummary[cellIndex]
+            ? allCountriesSummary[cellIndex] + cellAsNumber
+            : cellAsNumber;
+          return cellAsNumber;
         });
       });
+      dataContainer.timeSeries[dataType].unshift(allCountriesSummary);
       return dataContainer;
     }, defaultDataContainer));
 }

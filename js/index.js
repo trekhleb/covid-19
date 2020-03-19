@@ -36,7 +36,7 @@ function CovidChart({
     const datasets = types.map((type) => {
       return {
         label: covidDataTypes[type].title,
-        data: covidData.timeSeries[type][5].slice(covidDataSchema.dateStartColumn),
+        data: covidData.timeSeries[type][covidCountries.all.index].slice(covidDataSchema.dateStartColumn),
         borderWidth: 1,
         borderColor: covidDataTypes[type].borderColor,
         backgroundColor: covidDataTypes[type].backgroundColor,
