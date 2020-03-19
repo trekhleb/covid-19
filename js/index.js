@@ -23,12 +23,6 @@ function App() {
   return e('div', null, 'data');
 }
 
-function Button({onClick = () => {}, children = null}) {
-  const type = 'button';
-  const className = 'btn btn-dark';
-  return e('button', {type, className, onClick}, children);
-}
-
 function Spinner() {
   return e('div', {className: 'spinner-border'});
 }

@@ -12,7 +12,7 @@ function loadData() {
       responses.map(response => response.text()))
     )
     .then((data) => data.reduce((acc, val, index) => {
-      acc[Object.keys(dataURLs)[index]] = val;
+      acc[Object.keys(dataURLs)[index]] = Papa.parse(val).data;
       return acc;
     }, {}));
 }
