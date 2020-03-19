@@ -71,7 +71,7 @@ function loadCovidData() {
 }
 
 function getCovidRegions(covidData) {
-  if (!covidData) {
+  if (!covidData || !covidData.timeSeries) {
     return [];
   }
   return covidData.timeSeries[covidDataTypes.confirmed.key]
@@ -80,12 +80,15 @@ function getCovidRegions(covidData) {
       const country = region[covidDataSchema.countryColumn];
       const state = region[covidDataSchema.stateColumn];
       const name = state ? `${country} - ${state}` : country;
-
       const confirmedRow = covidData.timeSeries[covidDataTypes.confirmed.key][regionIndex + 1];
+      const recoveredRow = covidData.timeSeries[covidDataTypes.recovered.key][regionIndex + 1];
+      const deathsRow = covidData.timeSeries[covidDataTypes.deaths.key][regionIndex + 1];
       const numbers = {
         [covidDataTypes.confirmed.key]: confirmedRow[confirmedRow.length - 1],
+        [covidDataTypes.recovered.key]: confirmedRow[recoveredRow.length - 1],
+        [covidDataTypes.deaths.key]: confirmedRow[deathsRow.length - 1],
       };
-      return {name, regionIndex};
+      return {name, regionIndex: regionIndex + 1, numbers};
     })
     .sort((a, b) => {
       if (a.name === b.name) {return 0;}

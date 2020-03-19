@@ -63,6 +63,7 @@ function Regions({covidData}) {
     e(
       'tr',
       null,
+      e('th', null, ''),
       e('th', null, 'Regions'),
       e('th', null, 'Confirmed'),
       e('th', null, 'Recovered'),
@@ -73,10 +74,11 @@ function Regions({covidData}) {
     return e(
       'tr',
       {key: region.name},
+      e('td', null, e('input', {type: 'checkbox'})),
       e('td', null, region.name),
-      e('td', null, ''),
-      e('td', null, ''),
-      e('td', null, ''),
+      e('td', null, region.numbers[covidDataTypes.confirmed.key]),
+      e('td', null, region.numbers[covidDataTypes.recovered.key]),
+      e('td', null, region.numbers[covidDataTypes.deaths.key]),
     );
   });
   const tBody = e('tbody', null, rows);
