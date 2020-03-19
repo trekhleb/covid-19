@@ -12,9 +12,8 @@ function App() {
   r.useEffect(() => {
     loadCovidData().then((data) => setCovidData(data));
   }, []);
-  if (!covidData) {
-    return e(Spinner);
-  }
+  if (!covidData) {return e(Spinner);}
+  console.log(covidData);
   return e(
     'div',
     null,
@@ -37,14 +36,14 @@ function CovidChart({
     const datasets = types.map((type) => {
       return {
         label: covidDataTypes[type].title,
-        data: covidData[type][5].slice(covidDataSchema.dateStartColumn),
+        data: covidData.timeSeries[type][5].slice(covidDataSchema.dateStartColumn),
         borderWidth: 1,
         borderColor: covidDataTypes[type].borderColor,
         backgroundColor: covidDataTypes[type].backgroundColor,
         fill: false,
       };
     });
-    const labels = covidData[covidDataTypes.confirmed.key][0].slice(4);
+    const labels = covidData.labels.slice(covidDataSchema.dateStartColumn);
     new Chart(ctx, {
       type: 'line',
       data: {labels, datasets},
@@ -90,5 +89,9 @@ function Regions({covidData}) {
 }
 
 function Spinner() {
-  return e('div', {className: 'spinner-border'});
+  return e(
+    'div',
+    {className: 'd-flex justify-content-center'},
+    e('div', {className: 'spinner-border'})
+  );
 }
