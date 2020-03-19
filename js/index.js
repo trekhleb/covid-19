@@ -15,7 +15,12 @@ function App() {
   if (!covidData) {
     return e(Spinner);
   }
-  return e('div', null, e(CovidChart, {covidData}));
+  return e(
+    'div',
+    null,
+    e('div', {className: 'mb-4'}, e(CovidChart, {covidData})),
+    e('div', {className: 'mb-4'}, e(Regions, {covidData})),
+  );
 }
 
 function CovidChart({
@@ -32,7 +37,7 @@ function CovidChart({
     const datasets = types.map((type) => {
       return {
         label: covidDataTypes[type].title,
-        data: covidData[type][5].slice(4).map(count => parseInt(count, 10)),
+        data: covidData[type][5].slice(covidDataSchema.dateStartColumn),
         borderWidth: 1,
         borderColor: covidDataTypes[type].borderColor,
         backgroundColor: covidDataTypes[type].backgroundColor,
@@ -47,6 +52,41 @@ function CovidChart({
     });
   }, [types, countries]);
   return e('canvas', {height: 100, ref: canvasRef});
+}
+
+function Regions({covidData}) {
+  if (!covidData) {
+    return null;
+  }
+  const tHead = e(
+    'thead',
+    {className: 'thead-dark'},
+    e(
+      'tr',
+      null,
+      e('th', null, 'Regions'),
+      e('th', null, 'Confirmed'),
+      e('th', null, 'Recovered'),
+      e('th', null, 'Deaths'),
+    ),
+  );
+  const rows = getCovidRegions(covidData).map((region) => {
+    return e(
+      'tr',
+      {key: region.name},
+      e('td', null, region.name),
+      e('td', null, ''),
+      e('td', null, ''),
+      e('td', null, ''),
+    );
+  });
+  const tBody = e('tbody', null, rows);
+  return e(
+    'table',
+    {className: 'table table-hover table-sm'},
+    tHead,
+    tBody
+  );
 }
 
 function Spinner() {
