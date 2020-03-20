@@ -1,4 +1,4 @@
-const covidDataSchema = {
+const covidSchema = {
   headerRow: 0,
   stateColumn: 0,
   countryColumn: 1,
@@ -35,14 +35,17 @@ const covidDataTypes = {
 
 const covidCountries = {
   all: {
-    key: 'global',
+    key: 'Global',
     title: 'Global',
-    index: 0,
+    index: -1,
   }
 };
 
 function loadCovidData() {
-  const defaultDataContainer = {labels: [], timeSeries: {}};
+  const defaultDataContainer = {
+    labels: [],
+    ticks: {},
+  };
   return Promise
     .all(Object.values(covidDataTypes).map(
       dataType => fetch(dataType.dataSourceUrl)
@@ -50,49 +53,81 @@ function loadCovidData() {
     .then(responses => Promise.all(
       responses.map(response => response.text())
     ))
-    .then(data => data.reduce((dataContainer, val, index) => {
-      const dataType = Object.keys(covidDataTypes)[index];
-      const parsedData = Papa.parse(val).data;
-      dataContainer.labels = parsedData.shift();
-      const allCountriesSummary = ['', covidCountries.all.title, '', ''];
-      dataContainer.timeSeries[dataType] = parsedData.map((row, rowIndex) => {
-        return row.map((cell, cellIndex) => {
-          if (cellIndex < covidDataSchema.dateStartColumn) {return cell;}
-          const cellAsNumber = parseInt(cell, 10);
-          allCountriesSummary[cellIndex] = allCountriesSummary[cellIndex]
-            ? allCountriesSummary[cellIndex] + cellAsNumber
-            : cellAsNumber;
-          return cellAsNumber;
-        });
-      });
-      dataContainer.timeSeries[dataType].unshift(allCountriesSummary);
-      return dataContainer;
-    }, defaultDataContainer));
+    .then(dataTypesTicks => {
+      return dataTypesTicks.reduce(
+        (dataContainer, dataTypeTicksCSV, dataTypeIndex) => {
+          const dataType = Object.keys(covidDataTypes)[dataTypeIndex];
+          const dataTypeTicks = Papa.parse(dataTypeTicksCSV).data;
+          dataContainer.labels = dataTypeTicks.shift();
+          dataContainer.ticks[dataType] = dataTypeTicks
+            .map(regionTicks => {
+              return regionTicks.map((regionTick, tickIndex) => {
+                if (tickIndex < covidSchema.dateStartColumn) {
+                  return regionTick;
+                }
+                return parseInt(regionTick, 10);
+              });
+            })
+            .sort((regionTicksA, regionTicksB) => {
+              const regionNameA = getRegionKey(regionTicksA);
+              const regionNameB = getRegionKey(regionTicksB);
+              if (regionNameA > regionNameB) {
+                return 1;
+              }
+              else if (regionNameA < regionNameB) {
+                return -1;
+              }
+              return 0;
+            });
+          return dataContainer;
+        },
+        defaultDataContainer
+      );
+    });
+}
+
+function getRegionKey(regionTicks) {
+  const country = regionTicks[covidSchema.countryColumn];
+  const state = regionTicks[covidSchema.stateColumn];
+  return state ? `${country} - ${state}` : `${country}`;
+}
+
+function getRegionIndexByKey(covidData, dataType, regionKey) {
+  covidData.ticks[dataType].findIndex(
+    regionTicks => getRegionKey(regionTicks) === regionKey
+  );
+}
+
+function getGlobalTicks(covidData, dataType) {
+  const totalTicks = covidData.ticks[dataType][0].length;
+  const globalTicks = new Array(totalTicks).fill(0);
+  globalTicks[covidSchema.stateColumn] = '';
+  globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
+  globalTicks[covidSchema.latColumn] = '';
+  globalTicks[covidSchema.lonColumn] = '';
+  covidData.ticks[dataType].forEach(regionTicks => {
+    regionTicks.forEach((regionTick, tickIndex) => {
+      if (tickIndex < covidSchema.dateStartColumn) {
+        return;
+      }
+      globalTicks[tickIndex] += regionTick;
+    });
+  });
+  return globalTicks;
 }
 
 function getCovidRegions(covidData) {
-  if (!covidData || !covidData.timeSeries) {
-    return [];
-  }
-  return covidData.timeSeries[covidDataTypes.confirmed.key]
-    .slice(1)
-    .map((region, regionIndex) => {
-      const country = region[covidDataSchema.countryColumn];
-      const state = region[covidDataSchema.stateColumn];
-      const name = state ? `${country} - ${state}` : country;
-      const confirmedRow = covidData.timeSeries[covidDataTypes.confirmed.key][regionIndex + 1];
-      const recoveredRow = covidData.timeSeries[covidDataTypes.recovered.key][regionIndex + 1];
-      const deathsRow = covidData.timeSeries[covidDataTypes.deaths.key][regionIndex + 1];
+  return covidData.ticks[covidDataTypes.confirmed.key]
+    .map((regionTicks, regionIndex) => {
+      const name = getRegionKey(regionTicks);
+      const confirmedRow = covidData.ticks[covidDataTypes.confirmed.key][regionIndex];
+      const recoveredRow = covidData.ticks[covidDataTypes.recovered.key][regionIndex];
+      const deathsRow = covidData.ticks[covidDataTypes.deaths.key][regionIndex];
       const numbers = {
         [covidDataTypes.confirmed.key]: confirmedRow[confirmedRow.length - 1],
-        [covidDataTypes.recovered.key]: confirmedRow[recoveredRow.length - 1],
-        [covidDataTypes.deaths.key]: confirmedRow[deathsRow.length - 1],
+        [covidDataTypes.recovered.key]: recoveredRow[recoveredRow.length - 1],
+        [covidDataTypes.deaths.key]: deathsRow[deathsRow.length - 1],
       };
-      return {name, regionIndex: regionIndex + 1, numbers};
-    })
-    .sort((a, b) => {
-      if (a.name === b.name) {return 0;}
-      if (a.name >= b.name) {return 1;}
-      return -1;
+      return {name, numbers};
     });
 }
