@@ -9,10 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function App() {
   const [covidData, setCovidData] = r.useState(null);
-  const [types, setTypes] = r.useState(Object.keys(covidDataTypes));
+  const [dataTypes, setDataTypes] = r.useState(Object.keys(covidDataTypes));
   const [regions, setRegions] = r.useState([covidCountries.all.key]);
-  const onRegionSelect = (regionKey) => {
-
+  const onRegionSelect = () => {};
+  const onTypeSelect = (dataTypeKey) => {
+    if (dataTypes.includes(dataTypeKey)) {
+      const newDataTypes = [...dataTypes.filter(dataType => dataType !== dataTypeKey)];
+      setDataTypes(newDataTypes);
+    } else {
+      const newDataTypes = [...dataTypes, dataTypeKey];
+      setDataTypes(newDataTypes);
+    }
   };
   r.useEffect(() => {
     loadCovidData().then((data) => setCovidData(data));
@@ -24,7 +31,10 @@ function App() {
   return (
     e('div', null,
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData, regions, types})
+        e(CovidChart, {covidData, regions, dataTypes})
+      ),
+      e('div', {className: 'mb-4'},
+        e(DataTypes, {covidData, selectedTypes: dataTypes, onTypeSelect})
       ),
       e('div', {className: 'mb-4'},
         e(Regions, {covidData, regions, onRegionSelect})
@@ -33,41 +43,65 @@ function App() {
   );
 }
 
-function CovidChart({covidData, regions, types}) {
+function DataTypes({selectedTypes, onTypeSelect}) {
+  const dataTypes = Object.values(covidDataTypes).map(dataType => {
+    const checkboxId = `data-type-${dataType.key}`;
+    const checked = selectedTypes.includes(dataType.key) ? 'checked' : null;
+    return (
+      e('div', {className: 'form-group form-check mr-3', key: dataType.key},
+        e('input', {type: 'checkbox', id: checkboxId, className: 'form-check-input', checked, onChange: () => onTypeSelect(dataType.key)}),
+        e('label', {className: 'form-check-label', htmlFor: checkboxId},
+          dataType.title
+        )
+      )
+    )
+  });
+  return (
+    e('form', {className: 'form-inline'}, dataTypes)
+  );
+}
+
+function CovidChart({covidData, regions, dataTypes}) {
   const canvasRef = r.useRef(null);
+  const chartRef = r.useRef(null);
   r.useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
-    const ctx = canvasRef.current.getContext('2d');
     const labels = covidData.labels.slice(covidSchema.dateStartColumn);
     const datasets = [];
     regions.forEach(regionKey => {
-      types.forEach(typeKey => {
+      dataTypes.forEach(dataTypeKey => {
         let ticks = [];
         if (regionKey === covidCountries.all.key) {
-          ticks = getGlobalTicks(covidData, typeKey);
+          ticks = getGlobalTicks(covidData, dataTypeKey);
         } else {
-          const regionIndex = getRegionIndexByKey(covidData, typeKey, regionKey);
-          ticks = covidData.ticks[typeKey][regionIndex].slice(covidSchema.dateStartColumn);
+          const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
+          ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
         }
         const dataset = {
-          label: `${covidDataTypes[typeKey].title} (${regionKey})`,
+          label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
           data: ticks,
           borderWidth: 1,
-          borderColor: covidDataTypes[typeKey].borderColor,
-          backgroundColor: covidDataTypes[typeKey].backgroundColor,
+          borderColor: covidDataTypes[dataTypeKey].borderColor,
+          backgroundColor: covidDataTypes[dataTypeKey].backgroundColor,
           fill: false,
         };
         datasets.push(dataset);
       });
     });
-    new Chart(ctx, {
-      type: 'line',
-      data: {labels, datasets},
-      options: {},
-    });
-  }, [types, regions]);
+    if (!chartRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      chartRef.current = new Chart(ctx, {
+        type: 'line',
+        data: {labels, datasets},
+        options: {},
+      });
+    } else {
+      chartRef.current.config.data = {labels, datasets};
+      chartRef.current.update();
+    }
+  }, [dataTypes, regions]);
 
   return e('canvas', {height: 100, ref: canvasRef});
 }
