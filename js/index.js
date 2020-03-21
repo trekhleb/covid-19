@@ -98,15 +98,26 @@ function CovidChart({covidData, regions, selectedTypes}) {
         datasets.push(dataset);
       });
     });
-    const ctx = canvasRef.current.getContext('2d');
-    chartRef.current = new Chart(ctx, {
-      type: 'line',
-      data: {labels, datasets},
-      options: {},
-    });
+    if (!chartRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      chartRef.current = new Chart(ctx, {
+        type: 'line',
+        data: {labels, datasets},
+        options: {
+          responsive: true,
+        },
+      });
+    } else {
+      chartRef.current.config.data = {labels, datasets};
+      chartRef.current.update();
+    }
   }, [selectedTypes, regions]);
 
-  return e('canvas', {height: 100, ref: canvasRef});
+  const aspectRatio = 2;
+  const height = 100;
+  const width = aspectRatio * height;
+
+  return e('canvas', {width, height, ref: canvasRef});
 }
 
 function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
