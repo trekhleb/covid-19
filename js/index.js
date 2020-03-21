@@ -65,6 +65,18 @@ function App() {
 function CovidChart({covidData, regions, selectedTypes}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
+  const [screenWidth, screenHeight] = useWindowSize();
+
+  let aspectRatio = 1;
+  if (screenWidth > 450 && screenWidth <= 700) {
+    aspectRatio = 2;
+  } else if (screenWidth > 700 && screenWidth <= 1000) {
+    aspectRatio = 3;
+  } else if (screenWidth > 1000) {
+    aspectRatio = 4;
+  }
+  let chartWidth = 100;
+  let chartHeight = chartWidth * aspectRatio;
 
   r.useEffect(() => {
     if (!canvasRef.current) {
@@ -98,26 +110,21 @@ function CovidChart({covidData, regions, selectedTypes}) {
         datasets.push(dataset);
       });
     });
-    if (!chartRef.current) {
-      const ctx = canvasRef.current.getContext('2d');
-      chartRef.current = new Chart(ctx, {
-        type: 'line',
-        data: {labels, datasets},
-        options: {
-          responsive: true,
-        },
-      });
-    } else {
-      chartRef.current.config.data = {labels, datasets};
-      chartRef.current.update();
+    if (chartRef.current) {
+      chartRef.current.destroy();
     }
-  }, [selectedTypes, regions]);
-
-  const aspectRatio = 2;
-  const height = 100;
-  const width = aspectRatio * height;
-
-  return e('canvas', {width, height, ref: canvasRef});
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {labels, datasets},
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio,
+      },
+    });
+  }, [selectedTypes, regions, aspectRatio]);
+  return e('canvas', {ref: canvasRef});
 }
 
 function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
