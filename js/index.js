@@ -11,20 +11,27 @@ function App() {
   const [covidData, setCovidData] = r.useState(null);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
-  const onRegionChange = (regionKey) => {
-    if (selectedRegions.includes(regionKey)) {
-      const newRegions = [...selectedRegions.filter(region => region !== regionKey)];
+  const selectedRegionsRef = r.useRef([...selectedRegions]);
+
+  const onRegionChange = (changedRegionKey) => {
+    const currentRegions = selectedRegionsRef.current;
+    if (currentRegions.includes(changedRegionKey)) {
+      const newRegions = [...currentRegions.filter(regionKey => regionKey !== changedRegionKey)];
       if (newRegions.length) {
         setSelectedRegions(newRegions);
+        selectedRegionsRef.current = newRegions;
       } else {
-        setSelectedRegions([covidCountries.all.key]);
+        const newRegions = [covidCountries.all.key];
+        setSelectedRegions(newRegions);
+        selectedRegionsRef.current = newRegions;
       }
     } else {
-      const newRegions = [...selectedRegions.filter(region => region !== covidCountries.all.key), regionKey];
-      console.log(selectedRegions, newRegions);
+      const newRegions = [...currentRegions.filter(regionKey => regionKey !== covidCountries.all.key), changedRegionKey];
       setSelectedRegions(newRegions);
+      selectedRegionsRef.current = newRegions;
     }
   };
+
   const onTypeChange = (dataTypeKey) => {
     if (selectedTypes.includes(dataTypeKey)) {
       setSelectedTypes([...selectedTypes.filter(dataType => dataType !== dataTypeKey)]);
@@ -32,13 +39,15 @@ function App() {
       setSelectedTypes([...selectedTypes, dataTypeKey]);
     }
   };
+
   r.useEffect(() => {
     loadCovidData().then((data) => setCovidData(data));
   }, []);
+
   if (!covidData) {
     return e(Spinner);
   }
-  console.log(covidData);
+
   return (
     e('div', null,
       e('div', {className: 'mb-4'},
@@ -166,7 +175,7 @@ function Regions({covidData, onRegionChange}) {
   const rows = getCovidRegions(covidData).map((region) => {
     return e(
       'tr', {key: region.key},
-      e('td', {'data-checkbox': true}),
+      e('td', null),
       e('td', null, region.key),
       e('td', null, region.numbers[covidDataTypes.confirmed.key]),
       e('td', null, region.numbers[covidDataTypes.recovered.key]),
