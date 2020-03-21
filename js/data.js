@@ -92,20 +92,25 @@ function getRegionKey(regionTicks) {
   return state ? `${country} - ${state}` : `${country}`;
 }
 
-function getRegionIndexByKey(covidData, dataType, regionKey) {
-  covidData.ticks[dataType].findIndex(
+function getRegionIndexByKey(covidData, dataTypeKey, regionKey) {
+  return covidData.ticks[dataTypeKey].findIndex(
     regionTicks => getRegionKey(regionTicks) === regionKey
   );
 }
 
-function getGlobalTicks(covidData, dataType) {
-  const totalTicks = covidData.ticks[dataType][0].length;
+function getRegionByKey(covidData, dataTypeKey, regionKey) {
+  const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
+  return covidData.ticks[dataTypeKey][regionIndex];
+}
+
+function getGlobalTicks(covidData, dataTypeKey) {
+  const totalTicks = covidData.ticks[dataTypeKey][0].length;
   const globalTicks = new Array(totalTicks).fill(0);
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
   globalTicks[covidSchema.lonColumn] = '';
-  covidData.ticks[dataType].forEach(regionTicks => {
+  covidData.ticks[dataTypeKey].forEach(regionTicks => {
     regionTicks.forEach((regionTick, tickIndex) => {
       if (tickIndex < covidSchema.dateStartColumn) {
         return;
@@ -116,10 +121,22 @@ function getGlobalTicks(covidData, dataType) {
   return globalTicks;
 }
 
+function getTotalCount(covidData, dataTypeKey, regionKeys) {
+  if (regionKeys.includes(covidCountries.all.key)) {
+    const globalTicks = getGlobalTicks(covidData, dataTypeKey);
+    return globalTicks[globalTicks.length - 1];
+  }
+  return regionKeys.reduce((total, regionKey) => {
+    const regionTicks = getRegionByKey(covidData, dataTypeKey, regionKey);
+    total += regionTicks[regionTicks.length - 1];
+    return total;
+  }, 0);
+}
+
 function getCovidRegions(covidData) {
   return covidData.ticks[covidDataTypes.confirmed.key]
     .map((regionTicks, regionIndex) => {
-      const name = getRegionKey(regionTicks);
+      const key = getRegionKey(regionTicks);
       const confirmedRow = covidData.ticks[covidDataTypes.confirmed.key][regionIndex];
       const recoveredRow = covidData.ticks[covidDataTypes.recovered.key][regionIndex];
       const deathsRow = covidData.ticks[covidDataTypes.deaths.key][regionIndex];
@@ -128,6 +145,6 @@ function getCovidRegions(covidData) {
         [covidDataTypes.recovered.key]: recoveredRow[recoveredRow.length - 1],
         [covidDataTypes.deaths.key]: deathsRow[deathsRow.length - 1],
       };
-      return {name, numbers};
+      return {key, numbers};
     });
 }
