@@ -98,17 +98,12 @@ function CovidChart({covidData, regions, selectedTypes}) {
         datasets.push(dataset);
       });
     });
-    if (!chartRef.current) {
-      const ctx = canvasRef.current.getContext('2d');
-      chartRef.current = new Chart(ctx, {
-        type: 'line',
-        data: {labels, datasets},
-        options: {},
-      });
-    } else {
-      chartRef.current.config.data = {labels, datasets};
-      chartRef.current.update();
-    }
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {labels, datasets},
+      options: {},
+    });
   }, [selectedTypes, regions]);
 
   return e('canvas', {height: 100, ref: canvasRef});
