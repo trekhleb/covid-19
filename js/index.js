@@ -42,10 +42,10 @@ function App() {
   return (
     e('div', null,
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData, regions: selectedRegions, selectedTypes})
+        e(DataTypes, {covidData, selectedRegions, selectedTypes, onTypeChange})
       ),
       e('div', {className: 'mb-4'},
-        e(DataTypes, {covidData, selectedRegions, selectedTypes, onTypeChange})
+        e(CovidChart, {covidData, regions: selectedRegions, selectedTypes})
       ),
       e('div', {className: 'mb-4'},
         e(Regions, {covidData, onRegionChange})
@@ -130,7 +130,7 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
         e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
         e('div', {className: 'form-check-label'},
           dataType.title,
-          e('span', {className: badgeClass}, totalCount)
+          e('span', {className: badgeClass}, totalCount.toLocaleString())
         )
       )
     )
