@@ -49,7 +49,7 @@ function App() {
   }
   return (
     e('div', null,
-      e('div', {className: 'mb-4'},
+      e('div', {className: 'mb-1'},
         e(DataTypes, {covidData, selectedRegions, selectedTypes, onTypeChange})
       ),
       e('div', {className: 'mb-4'},
@@ -137,9 +137,9 @@ function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
 
 function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
   const alertClasses = {
-    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3',
-    [covidDataTypes.recovered.key]: 'alert alert-success mr-3',
-    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3',
+    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
+    [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
+    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
   };
   const badgeClasses = {
     [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
