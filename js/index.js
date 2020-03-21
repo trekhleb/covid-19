@@ -47,7 +47,6 @@ function App() {
   if (!covidData) {
     return e(Spinner);
   }
-
   return (
     e('div', null,
       e('div', {className: 'mb-4'},
@@ -66,11 +65,18 @@ function App() {
 function CovidChart({covidData, regions, selectedTypes}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
+
   r.useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
-    const labels = covidData.labels.slice(covidSchema.dateStartColumn);
+    const labels = covidData.labels
+      .slice(covidSchema.dateStartColumn)
+      .map(dateLabel => {
+        const date = new Date(dateLabel);
+        const options = {year: 'numeric', month: 'short', day: '2-digit'};
+        return date.toLocaleDateString('en-US', options);
+      });
     const datasets = [];
     regions.forEach(regionKey => {
       selectedTypes.forEach(dataTypeKey => {
@@ -194,7 +200,7 @@ function Regions({covidData, onRegionChange}) {
       'data-sort-name': 'confirmed',
       'data-sort-order': 'desc',
       'data-sort-stable': true,
-      'data-search-align': 'right',
+      'data-search-align': 'left',
       'data-click-to-select': true,
       'data-checkbox-header': false,
     },
