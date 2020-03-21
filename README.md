@@ -1,1 +1,2 @@
-# COVID-19
+# Coronavirus (COVID-19) Dashboard
+
