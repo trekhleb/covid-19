@@ -1,6 +1,6 @@
 # Coronavirus (COVID-19) Dashboard
 
-📈 [**📈 Coronavirus (COVID-19) Dashboard**](https://trekhleb.github.io/covid-19/) shows the dynamics (the curvature of the graph) of Сoronavirus distribution per country.
+📈 [**Coronavirus (COVID-19) Dashboard**](https://trekhleb.github.io/covid-19/) shows the dynamics (the curvature of the graph) of Сoronavirus distribution per country.
 
 ## Reasoning
 
