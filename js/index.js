@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function App() {
   const [covidData, setCovidData] = r.useState(null);
+  const [errorMessage, setErrorMessage] = r.useState(null);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
   const selectedRegionsRef = r.useRef([...selectedRegions]);
@@ -41,9 +42,14 @@ function App() {
   };
 
   r.useEffect(() => {
-    loadCovidData().then((data) => setCovidData(data));
+    loadCovidData()
+      .then((data) => setCovidData(data))
+      .catch(() => setErrorMessage('Cannot fetch the statistics data. It might be a network issue. Try to refresh the page.'));
   }, []);
 
+  if (errorMessage) {
+    return e(ErrorMessage, {errorMessage});
+  }
   if (!covidData) {
     return e(Spinner);
   }
@@ -220,6 +226,10 @@ function Regions({covidData, onRegionChange}) {
     tHead,
     tBody
   );
+}
+
+function ErrorMessage({errorMessage}) {
+  return e('div', {className: 'alert alert-danger'}, errorMessage);
 }
 
 function Spinner() {
