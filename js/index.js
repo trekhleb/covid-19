@@ -110,7 +110,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
           data: ticks,
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
-          backgroundColor: covidDataTypes[dataTypeKey].backgroundColor,
+          backgroundColor: `${covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth]}33`,
           fill: false,
         };
         datasets.push(dataset);

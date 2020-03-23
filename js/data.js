@@ -19,21 +19,18 @@ const covidDataTypes = {
     key: 'confirmed',
     title: 'Confirmed',
     dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Confirmed.csv`,
-    backgroundColor: 'rgba(255, 159, 64, 0.2)',
     borderColor: confirmedPalette,
   },
   recovered: {
     key: 'recovered',
     title: 'Recovered',
     dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Recovered.csv`,
-    backgroundColor: 'rgba(75, 192, 192, 0.2)',
     borderColor: recoveredPalette,
   },
   deaths: {
     key: 'deaths',
     title: 'Deaths',
     dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Deaths.csv`,
-    backgroundColor: 'rgba(255, 99, 132, 0.2)',
     borderColor: deathsPalette,
   },
 };
