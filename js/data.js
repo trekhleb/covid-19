@@ -61,10 +61,16 @@ function loadCovidData() {
           const dataTypeTicks = Papa.parse(dataTypeTicksCSV).data;
           dataContainer.labels = dataTypeTicks.shift();
           dataContainer.ticks[dataType] = dataTypeTicks
+            .filter(regionTicks => {
+              return regionTicks.length === dataContainer.labels.length;
+            })
             .map(regionTicks => {
               return regionTicks.map((regionTick, tickIndex) => {
                 if (tickIndex < covidSchema.dateStartColumn) {
                   return regionTick;
+                }
+                if (!regionTick) {
+                  return 0;
                 }
                 return parseInt(regionTick, 10);
               });
