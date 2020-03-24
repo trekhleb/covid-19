@@ -9,7 +9,6 @@ const covidSchema = {
 
 const covidDataBaseURL = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series';
 
-const paletteDepth = 5;
 const confirmedPalette = ['#FF9F40', '#703600', '#D66700', '#FF800A', '#A34E00'];
 const recoveredPalette = ['#4BC0C0', '#1D5353', '#379E9E', '#4BC0C0', '#2A7878'];
 const deathsPalette = ['#FF6384', '#93001D', '#F90031', '#FF2D57', '#C60027'];

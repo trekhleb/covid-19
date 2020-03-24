@@ -105,12 +105,12 @@ function CovidChart({covidData, regions, selectedTypes}) {
           const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
           ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
         }
+        const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
           data: ticks,
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
-          backgroundColor: `${covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth]}33`,
           fill: false,
         };
         datasets.push(dataset);
