@@ -96,7 +96,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
         return date.toLocaleDateString('en-US', options);
       });
     const datasets = [];
-    regions.forEach(regionKey => {
+    regions.forEach((regionKey, regionIndex) => {
       selectedTypes.forEach(dataTypeKey => {
         let ticks = [];
         if (regionKey === covidCountries.all.key) {
@@ -109,8 +109,8 @@ function CovidChart({covidData, regions, selectedTypes}) {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
           data: ticks,
           borderWidth: 1,
-          borderColor: covidDataTypes[dataTypeKey].borderColor,
-          backgroundColor: covidDataTypes[dataTypeKey].backgroundColor,
+          borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
+          backgroundColor: `${covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth]}33`,
           fill: false,
         };
         datasets.push(dataset);
