@@ -193,7 +193,7 @@ function Regions({covidData, onRegionChange}) {
       e('th', {'data-field': 'region', 'data-sortable': true}, 'Regions'),
       e('th', {'data-field': 'confirmed', 'data-sortable': true}, 'Confirmed'),
       // e('th', {'data-field': 'recovered', 'data-sortable': true}, 'Recovered'),
-      e('th', {'data-field': 'deaths', 'data-sortabrecoveredle': true}, 'Deaths'),
+      e('th', {'data-field': 'deaths', 'data-sortable': true}, 'Deaths'),
     ),
   );
   const rows = getCovidRegions(covidData).map((region) => {
