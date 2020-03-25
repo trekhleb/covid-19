@@ -17,19 +17,19 @@ const covidDataTypes = {
   confirmed: {
     key: 'confirmed',
     title: 'Confirmed',
-    dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Confirmed.csv`,
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
     borderColor: confirmedPalette,
   },
-  recovered: {
-    key: 'recovered',
-    title: 'Recovered',
-    dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Recovered.csv`,
-    borderColor: recoveredPalette,
-  },
+  // recovered: {
+  //   key: 'recovered',
+  //   title: 'Recovered',
+  //   dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Recovered.csv`,
+  //   borderColor: recoveredPalette,
+  // },
   deaths: {
     key: 'deaths',
     title: 'Deaths',
-    dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Deaths.csv`,
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
   },
 };
@@ -145,15 +145,26 @@ function getCovidRegions(covidData) {
     .map((regionTicks, regionIndex) => {
       const key = getRegionKey(regionTicks);
       const confirmedRow = covidData.ticks[covidDataTypes.confirmed.key][regionIndex];
-      const recoveredRow = covidData.ticks[covidDataTypes.recovered.key][regionIndex];
+      // const recoveredRow = covidData.ticks[covidDataTypes.recovered.key][regionIndex];
       const deathsRow = covidData.ticks[covidDataTypes.deaths.key][regionIndex];
       const numbers = {
         [covidDataTypes.confirmed.key]: confirmedRow[confirmedRow.length - 1],
-        [covidDataTypes.recovered.key]: recoveredRow[recoveredRow.length - 1],
+        // [covidDataTypes.recovered.key]: recoveredRow[recoveredRow.length - 1],
         [covidDataTypes.deaths.key]: deathsRow[deathsRow.length - 1],
       };
       return {key, numbers};
     });
+}
+
+function getLastUpdatedDate(covidData) {
+  const dateLabel = covidData.labels[covidData.labels.length - 1];
+  return formatDateLabel(dateLabel);
+}
+
+function formatDateLabel(dateLabel) {
+  const date = new Date(dateLabel);
+  const options = {year: 'numeric', month: 'short', day: '2-digit'};
+  return date.toLocaleDateString('en-US', options);
 }
 
 function groupCovidDataByCountries(covidData) {
