@@ -55,6 +55,9 @@ function App() {
   }
   return (
     e('div', null,
+      e('div', {className: 'mb-3'},
+        e(LastUpdatedDate, {covidData})
+      ),
       e('div', {className: 'mb-1'},
         e(DataTypes, {covidData, selectedRegions, selectedTypes, onTypeChange})
       ),
@@ -90,11 +93,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
     }
     const labels = covidData.labels
       .slice(covidSchema.dateStartColumn)
-      .map(dateLabel => {
-        const date = new Date(dateLabel);
-        const options = {year: 'numeric', month: 'short', day: '2-digit'};
-        return date.toLocaleDateString('en-US', options);
-      });
+      .map(formatDateLabel);
     const datasets = [];
     regions.forEach((regionKey, regionIndex) => {
       selectedTypes.forEach(dataTypeKey => {
@@ -225,6 +224,14 @@ function Regions({covidData, onRegionChange}) {
     },
     tHead,
     tBody
+  );
+}
+
+function LastUpdatedDate({covidData}) {
+  const lastUpdatedDate = getLastUpdatedDate(covidData);
+  return e('small', {className: 'text-muted'},
+    'Last updated: ',
+    e('span', {className: 'badge badge-dark'}, lastUpdatedDate)
   );
 }
 
