@@ -1,0 +1,9 @@
+.covid-data-table-wrapper {
+  overflow-y: auto;
+  height: 350px;
+}
+
+.covid-data-table-wrapper > table > thead th {
+  position: sticky;
+  top: 0;
+}
