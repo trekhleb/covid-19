@@ -144,12 +144,12 @@ function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
 function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
   const alertClasses = {
     [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
-    [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
+    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
     [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
   };
   const badgeClasses = {
     [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
-    [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
+    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
     [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
   };
   const alertClass = alertClasses[dataType.key];
@@ -193,8 +193,8 @@ function Regions({covidData, onRegionChange}) {
       e('th', {'data-checkbox': true}, ''),
       e('th', {'data-field': 'region', 'data-sortable': true}, 'Regions'),
       e('th', {'data-field': 'confirmed', 'data-sortable': true}, 'Confirmed'),
-      e('th', {'data-field': 'recovered', 'data-sortable': true}, 'Recovered'),
-      e('th', {'data-field': 'deaths', 'data-sortable': true}, 'Deaths'),
+      // e('th', {'data-field': 'recovered', 'data-sortable': true}, 'Recovered'),
+      e('th', {'data-field': 'deaths', 'data-sortabrecoveredle': true}, 'Deaths'),
     ),
   );
   const rows = getCovidRegions(covidData).map((region) => {
@@ -203,7 +203,7 @@ function Regions({covidData, onRegionChange}) {
       e('td', null),
       e('td', null, region.key),
       e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-      e('td', null, region.numbers[covidDataTypes.recovered.key]),
+      // e('td', null, region.numbers[covidDataTypes.recovered.key]),
       e('td', null, region.numbers[covidDataTypes.deaths.key]),
     );
   });
