@@ -15,6 +15,7 @@ function App() {
   const [groupByCountry, setGroupByCountry] = r.useState(false);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
+  const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
 
   const selectedRegionsRef = r.useRef([...selectedRegions]);
 
@@ -43,6 +44,11 @@ function App() {
     } else {
       setSelectedTypes([...selectedTypes, dataTypeKey]);
     }
+  };
+
+  const onCountrySearch = (query) => {
+    const q = query || '';
+    setCountrySearchQuery(q);
   };
 
   const onGroupByCountries = () => {
@@ -78,14 +84,60 @@ function App() {
       e('div', {className: 'mb-4'},
         e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes})
       ),
-      e('div', {className: 'mb-1'},
-        e(TableFilters, {groupByCountry, onGroupByCountries})
+      e('div', {className: 'mb-0'},
+        e(TableFilters, {groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch})
       ),
       e('div', {className: 'mb-4'},
-        e(Regions, {covidData: covidDataInUse, selectedRegions, onRegionChange})
+        e(RegionsTable, {covidData: covidDataInUse, selectedRegions, onRegionChange, countrySearchQuery})
       ),
     )
   );
+}
+
+function LastUpdatedDate({covidData}) {
+  const lastUpdatedDate = getLastUpdatedDate(covidData);
+  return e('small', {className: 'text-muted'},
+    'Last updated: ',
+    e('span', {className: 'badge badge-dark'}, lastUpdatedDate)
+  );
+}
+
+function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
+  const dataTypes = Object.values(covidDataTypes).map(dataType => {
+    const checked = !!selectedTypes.includes(dataType.key);
+    return e(DataType, {key: dataType.key, covidData, selectedRegions, dataType, checked, onTypeChange})
+  });
+  return e('form', {className: 'form-inline'}, dataTypes);
+}
+
+function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
+  const alertClasses = {
+    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
+    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
+    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
+  };
+  const badgeClasses = {
+    [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
+    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
+    [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
+  };
+  const alertClass = alertClasses[dataType.key];
+  const badgeClass = badgeClasses[dataType.key];
+  const totalCount = getTotalCount(covidData, dataType.key, selectedRegions);
+  const onChange = () => {
+    onTypeChange(dataType.key);
+  };
+  return (
+    e('label', {className: alertClass},
+      e('div', {className: 'form-group form-check mb-0'},
+        e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
+        e('div', {className: 'form-check-label'},
+          dataType.title,
+          e('span', {className: badgeClass}, totalCount.toLocaleString())
+        )
+      )
+    )
+  )
 }
 
 function CovidChart({covidData, regions, selectedTypes}) {
@@ -147,45 +199,41 @@ function CovidChart({covidData, regions, selectedTypes}) {
   return e('canvas', {ref: canvasRef});
 }
 
-function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
-  const dataTypes = Object.values(covidDataTypes).map(dataType => {
-    const checked = !!selectedTypes.includes(dataType.key);
-    return e(DataType, {key: dataType.key, covidData, selectedRegions, dataType, checked, onTypeChange})
-  });
-  return e('form', {className: 'form-inline'}, dataTypes);
+function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch}) {
+  return (
+    e('form', {className: 'form-inline'},
+      e('div', {className: 'form-group mr-3 mb-2'},
+        e(CountrySearch, {countrySearchQuery, onCountrySearch})
+      ),
+      e('div', {className: 'form-group form-check mb-2'},
+        e(CountryGrouper, {groupByCountry, onGroupByCountries})
+      )
+    )
+  );
 }
 
-function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
-  const alertClasses = {
-    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
-    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
-    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
-  };
-  const badgeClasses = {
-    [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
-    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
-    [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
-  };
-  const alertClass = alertClasses[dataType.key];
-  const badgeClass = badgeClasses[dataType.key];
-  const totalCount = getTotalCount(covidData, dataType.key, selectedRegions);
-  const onChange = () => {
-    onTypeChange(dataType.key);
-  };
+function CountrySearch({countrySearchQuery, onCountrySearch}) {
   return (
-    e('label', {className: alertClass},
-      e('div', {className: 'form-group form-check mb-0'},
-        e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
-        e('div', {className: 'form-check-label'},
-          dataType.title,
-          e('span', {className: badgeClass}, totalCount.toLocaleString())
-        )
-      )
+    e('input', {
+      type: 'search',
+      className: 'form-control',
+      placeholder: 'Search country',
+      onChange: (e) => onCountrySearch(e.target.value),
+      value: countrySearchQuery,
+    })
+  );
+}
+
+function CountryGrouper({groupByCountry, onGroupByCountries}) {
+  return (
+    e('label', null,
+      e('input', {type: 'checkbox', className: 'form-check-input', onChange: onGroupByCountries, checked: groupByCountry}),
+      e('div', {className: 'form-check-label'}, 'Group by countries')
     )
   )
 }
 
-function Regions({covidData, selectedRegions, onRegionChange}) {
+function RegionsTable({covidData, selectedRegions, onRegionChange, countrySearchQuery}) {
   const tHead = (
     e('thead', {className: 'thead-dark'},
       e('tr', null,
@@ -198,32 +246,31 @@ function Regions({covidData, selectedRegions, onRegionChange}) {
       ),
     )
   );
-  const rows = getCovidRegions(covidData).map((region, regionIndex) => {
-    const checked = !!selectedRegions.includes(region.key);
-    return (
-      e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
-        e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
-        e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex}`)),
-        e('td', null, region.key),
-        e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-        // e('td', null, region.numbers[covidDataTypes.recovered.key]),
-        e('td', null, region.numbers[covidDataTypes.deaths.key]),
-      )
-    );
-  });
+  const rows = getCovidRegions(covidData)
+    .filter((region) => {
+      if (!countrySearchQuery) {
+        return true;
+      }
+      return region.key.search(new RegExp(countrySearchQuery, 'i')) >= 0;
+    })
+    .map((region, regionIndex) => {
+      const checked = !!selectedRegions.includes(region.key);
+      return (
+        e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
+          e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
+          e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex}`)),
+          e('td', null, region.key),
+          e('td', null, region.numbers[covidDataTypes.confirmed.key]),
+          // e('td', null, region.numbers[covidDataTypes.recovered.key]),
+          e('td', null, region.numbers[covidDataTypes.deaths.key]),
+        )
+      );
+    });
   const tBody = e('tbody', null, rows);
   return (
     e('div', {className: 'table-responsive covid-data-table-wrapper'},
       e('table', {className: 'table table-hover'}, tHead, tBody)
     )
-  );
-}
-
-function LastUpdatedDate({covidData}) {
-  const lastUpdatedDate = getLastUpdatedDate(covidData);
-  return e('small', {className: 'text-muted'},
-    'Last updated: ',
-    e('span', {className: 'badge badge-dark'}, lastUpdatedDate)
   );
 }
 
@@ -236,25 +283,4 @@ function Spinner() {
     'div', {className: 'd-flex justify-content-center mt-5 mb-5'},
     e('div', {className: 'spinner-border'})
   );
-}
-
-function TableFilters({groupByCountry, onGroupByCountries}) {
-  return (
-    e('div', null,
-      e(CountryGrouper, {groupByCountry, onGroupByCountries})
-    )
-  );
-}
-
-function CountryGrouper({groupByCountry, onGroupByCountries}) {
-  return (
-    e('label', null,
-      e('div', {className: 'form-group form-check mb-0'},
-        e('input', {type: 'checkbox', className: 'form-check-input', onChange: onGroupByCountries, checked: groupByCountry}),
-        e('div', {className: 'form-check-label'},
-          'Group by countries'
-        )
-      )
-    )
-  )
 }
