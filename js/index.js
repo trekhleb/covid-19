@@ -12,7 +12,7 @@ function App() {
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
   const [errorMessage, setErrorMessage] = r.useState(null);
 
-  const [groupByCountry, setGroupByCountry] = r.useState(false);
+  const [groupByCountry, setGroupByCountry] = r.useState(true);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
   const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
@@ -75,7 +75,7 @@ function App() {
   if (errorMessage) {
     return e(ErrorMessage, {errorMessage});
   }
-  if (!covidData) {
+  if (!covidData || !covidDataByCountries) {
     return e(Spinner);
   }
 
@@ -97,6 +97,7 @@ function App() {
       ),
       e('div', {className: 'mb-4'},
         e(RegionsTable, {
+          groupByCountry,
           covidData: covidDataInUse,
           selectedRegions,
           onRegionChange,
@@ -250,6 +251,7 @@ function CountryGrouper({groupByCountry, onGroupByCountries}) {
 }
 
 function RegionsTable({
+  groupByCountry,
   covidData,
   selectedRegions,
   onRegionChange,
@@ -273,7 +275,7 @@ function RegionsTable({
         e('th', null, ''),
         e('th', null, ''),
         e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.country.key)},
-          'Regions',
+          groupByCountry ? 'Countries' : 'Regions',
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.country.key ? dataSortDirection : null})
         ),
         e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)},
