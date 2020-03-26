@@ -272,10 +272,19 @@ function RegionsTable({
       e('tr', null,
         e('th', null, ''),
         e('th', null, ''),
-        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.country.key)}, 'Regions'),
-        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)}, 'Confirmed'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.country.key)},
+          'Regions',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.country.key ? dataSortDirection : null})
+        ),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)},
+          'Confirmed',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.confirmed.key ? dataSortDirection : null})
+        ),
         // e('th', null, 'Recovered'),
-        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.deaths.key)}, 'Deaths'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.deaths.key)},
+          'Deaths',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
+        ),
       ),
     )
   );
@@ -327,6 +336,21 @@ function RegionsTable({
       ),
       e('small', {className: 'text-muted'}, '* Table is scrollable')
     )
+  );
+}
+
+function ColumnSorter({sortDirection}) {
+  const className = sortDirection ? 'ml-2' : 'ml-2 text-muted';
+  let sorter = null;
+  if (!sortDirection) {
+    sorter = e('i', {className: 'fas fa-sort'});
+  } else if (sortDirection === covidSortDirections.asc.key) {
+    sorter = e('i', {className: 'fas fa-sort-up'});
+  } else {
+    sorter = e('i', {className: 'fas fa-sort-down'});
+  }
+  return (
+    e('span', {className}, sorter)
   );
 }
 
