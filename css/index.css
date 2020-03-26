@@ -1,0 +1,14 @@
+.covid-data-table-wrapper {
+  overflow-y: auto;
+  height: 350px;
+}
+
+.covid-data-table-wrapper > table > thead th {
+  position: sticky;
+  top: 0;
+  box-shadow: 0 0 0 1px #343a40;
+}
+
+.covid-data-table-wrapper > table > thead th[sortable] {
+  cursor: pointer;
+}

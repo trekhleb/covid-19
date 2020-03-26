@@ -13,9 +13,17 @@ function roundTwoDecimals(num) {
 
 function App() {
   const [covidData, setCovidData] = r.useState(null);
+  const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
   const [errorMessage, setErrorMessage] = r.useState(null);
+
+  const [groupByCountry, setGroupByCountry] = r.useState(true);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
+
+  const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
+
+  const [dataSort, setDataSort] = r.useState(covidSorts.confirmed.key);
+  const [dataSortDirection, setDataSortDirection] = r.useState(covidSortDirections.desc.key);
 
   const selectedRegionsRef = r.useRef([...selectedRegions]);
 
@@ -38,6 +46,11 @@ function App() {
     }
   };
 
+  const onDataSort = (dataSortKey, dataSortDirectionKey) => {
+    setDataSort(dataSortKey);
+    setDataSortDirection(dataSortDirectionKey);
+  };
+
   const onTypeChange = (dataTypeKey) => {
     if (selectedTypes.includes(dataTypeKey)) {
       setSelectedTypes([...selectedTypes.filter(dataType => dataType !== dataTypeKey)]);
@@ -46,34 +59,107 @@ function App() {
     }
   };
 
+  const onCountrySearch = (query) => {
+    const q = query || '';
+    setCountrySearchQuery(q);
+  };
+
+  const onGroupByCountries = () => {
+    setGroupByCountry(!groupByCountry);
+  };
+
   r.useEffect(() => {
     loadCovidData()
-      .then((data) => setCovidData(data))
+      .then((data) => {
+        setCovidData(data);
+        setCovidDataByCountries(groupCovidDataByCountries(data));
+      })
       .catch(() => setErrorMessage('Cannot fetch the statistics data. It might be a network issue. Try to refresh the page.'));
   }, []);
 
   if (errorMessage) {
     return e(ErrorMessage, {errorMessage});
   }
-  if (!covidData) {
+  if (!covidData || !covidDataByCountries) {
     return e(Spinner);
   }
+
+  const covidDataInUse = groupByCountry ? covidDataByCountries : covidData;
+
   return (
     e('div', null,
       e('div', {className: 'mb-3'},
         e(LastUpdatedDate, {covidData})
       ),
       e('div', {className: 'mb-1'},
-        e(DataTypes, {covidData, selectedRegions, selectedTypes, onTypeChange})
+        e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData, regions: selectedRegions, selectedTypes})
+        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes})
+      ),
+      e('div', {className: 'mb-0'},
+        e(TableFilters, {groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch})
       ),
       e('div', {className: 'mb-4'},
-        e(Regions, {covidData, onRegionChange})
+        e(RegionsTable, {
+          groupByCountry,
+          covidData: covidDataInUse,
+          selectedRegions,
+          onRegionChange,
+          countrySearchQuery,
+          dataSort,
+          dataSortDirection,
+          onDataSort,
+        })
       ),
     )
   );
+}
+
+function LastUpdatedDate({covidData}) {
+  const lastUpdatedDate = getLastUpdatedDate(covidData);
+  return e('small', {className: 'text-muted'},
+    'Last updated: ',
+    e('span', {className: 'badge badge-dark'}, lastUpdatedDate)
+  );
+}
+
+function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
+  const dataTypes = Object.values(covidDataTypes).map(dataType => {
+    const checked = !!selectedTypes.includes(dataType.key);
+    return e(DataType, {key: dataType.key, covidData, selectedRegions, dataType, checked, onTypeChange})
+  });
+  return e('form', {className: 'form-inline'}, dataTypes);
+}
+
+function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
+  const alertClasses = {
+    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
+    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
+    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
+  };
+  const badgeClasses = {
+    [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
+    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
+    [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
+  };
+  const alertClass = alertClasses[dataType.key];
+  const badgeClass = badgeClasses[dataType.key];
+  const totalCount = getTotalCount(covidData, dataType.key, selectedRegions);
+  const onChange = () => {
+    onTypeChange(dataType.key);
+  };
+  return (
+    e('label', {className: alertClass},
+      e('div', {className: 'form-group form-check mb-0'},
+        e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
+        e('div', {className: 'form-check-label'},
+          dataType.title,
+          e('span', {className: badgeClass}, totalCount.toLocaleString())
+        )
+      )
+    )
+  )
 }
 
 function Toggle({text, onValueChange}) {
@@ -103,8 +189,6 @@ function CovidChart({covidData, regions, selectedTypes}) {
   } else if (screenWidth > 1000) {
     aspectRatio = 4;
   }
-  let chartWidth = 100;
-  let chartHeight = chartWidth * aspectRatio;
 
   function toLogarithmicScale(ticks) {
     return ticks.map(t => {
@@ -163,106 +247,143 @@ function CovidChart({covidData, regions, selectedTypes}) {
   );
 }
 
-function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
-  const dataTypes = Object.values(covidDataTypes).map(dataType => {
-    const checked = selectedTypes.includes(dataType.key);
-    return e(DataType, {key: dataType.key, covidData, selectedRegions, dataType, checked, onTypeChange})
-  });
-  return e('form', {className: 'form-inline'}, dataTypes);
+function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch}) {
+  return (
+    e('form', {className: 'form-inline'},
+      e('div', {className: 'form-group mr-3 mb-2'},
+        e(CountrySearch, {countrySearchQuery, onCountrySearch})
+      ),
+      e('div', {className: 'form-group form-check mb-2'},
+        e(CountryGrouper, {groupByCountry, onGroupByCountries})
+      )
+    )
+  );
 }
 
-function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
-  const alertClasses = {
-    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
-    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
-    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
-  };
-  const badgeClasses = {
-    [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
-    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
-    [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
-  };
-  const alertClass = alertClasses[dataType.key];
-  const badgeClass = badgeClasses[dataType.key];
-  const totalCount = getTotalCount(covidData, dataType.key, selectedRegions);
-  const onChange = () => {
-    onTypeChange(dataType.key);
-  };
+function CountrySearch({countrySearchQuery, onCountrySearch}) {
   return (
-    e('label', {className: alertClass},
-      e('div', {className: 'form-group form-check mb-0'},
-        e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
-        e('div', {className: 'form-check-label'},
-          dataType.title,
-          e('span', {className: badgeClass}, totalCount.toLocaleString())
-        )
-      )
+    e('input', {
+      type: 'search',
+      className: 'form-control',
+      placeholder: 'Search country',
+      onChange: (e) => onCountrySearch(e.target.value),
+      value: countrySearchQuery,
+    })
+  );
+}
+
+function CountryGrouper({groupByCountry, onGroupByCountries}) {
+  return (
+    e('label', null,
+      e('input', {type: 'checkbox', className: 'form-check-input', onChange: onGroupByCountries, checked: groupByCountry}),
+      e('div', {className: 'form-check-label'}, 'Group by countries')
     )
   )
 }
 
-function Regions({covidData, onRegionChange}) {
-  const regionsTableRef = r.useRef(null);
-  r.useEffect(() => {
-    if (!regionsTableRef.current) {
-      return;
+function RegionsTable({
+  groupByCountry,
+  covidData,
+  selectedRegions,
+  onRegionChange,
+  countrySearchQuery,
+  dataSort,
+  dataSortDirection,
+  onDataSort,
+}) {
+  const onColumnSort = (columnName) => {
+    if (columnName === dataSort) {
+      const newDataSortDirection =
+        dataSortDirection === covidSortDirections.asc.key ? covidSortDirections.desc.key : covidSortDirections.asc.key;
+      onDataSort(columnName, newDataSortDirection);
+    } else {
+      onDataSort(columnName, dataSortDirection);
     }
-    $(regionsTableRef.current).bootstrapTable({
-      onCheck: (row) => {
-        onRegionChange(row.region);
-      },
-      onUncheck: (row) => {
-        onRegionChange(row.region);
-      },
-    });
-  }, [onRegionChange, covidData]);
-  const tHead = e(
-    'thead', {className: 'thead-dark'},
-    e(
-      'tr', null,
-      e('th', {'data-checkbox': true}, ''),
-      e('th', {'data-field': 'region', 'data-sortable': true}, 'Regions'),
-      e('th', {'data-field': 'confirmed', 'data-sortable': true}, 'Confirmed'),
-      // e('th', {'data-field': 'recovered', 'data-sortable': true}, 'Recovered'),
-      e('th', {'data-field': 'deaths', 'data-sortable': true}, 'Deaths'),
-    ),
+  };
+  const tHead = (
+    e('thead', {className: 'thead-dark'},
+      e('tr', null,
+        e('th', null, ''),
+        e('th', null, ''),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.country.key)},
+          groupByCountry ? 'Countries' : 'Regions',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.country.key ? dataSortDirection : null})
+        ),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)},
+          'Confirmed',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.confirmed.key ? dataSortDirection : null})
+        ),
+        // e('th', null, 'Recovered'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.deaths.key)},
+          'Deaths',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
+        ),
+      ),
+    )
   );
-  const rows = getCovidRegions(covidData).map((region) => {
-    return e(
-      'tr', {key: region.key},
-      e('td', null),
-      e('td', null, region.key),
-      e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-      // e('td', null, region.numbers[covidDataTypes.recovered.key]),
-      e('td', null, region.numbers[covidDataTypes.deaths.key]),
-    );
-  });
+  const rows = getCovidRegions(covidData)
+    .filter((region) => {
+      if (!countrySearchQuery) {
+        return true;
+      }
+      return region.key.search(new RegExp(countrySearchQuery, 'i')) >= 0;
+    })
+    .sort((regionA, regionB) => {
+      let sortCriteriaA;
+      let sortCriteriaB;
+      switch (dataSort) {
+        case covidSorts.country.key:
+          sortCriteriaA = regionA.key;
+          sortCriteriaB = regionB.key;
+          break;
+        default:
+          sortCriteriaA = regionA.numbers[covidSorts[dataSort].dataKey];
+          sortCriteriaB = regionB.numbers[covidSorts[dataSort].dataKey];
+      }
+      if (sortCriteriaA === sortCriteriaB) {
+        return 0;
+      }
+      if (sortCriteriaA > sortCriteriaB) {
+        return dataSortDirection === covidSortDirections.desc.key ? -1 : 1;
+      }
+      return dataSortDirection === covidSortDirections.desc.key ? 1 : -1;
+    })
+    .map((region, regionIndex) => {
+      const checked = !!selectedRegions.includes(region.key);
+      return (
+        e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
+          e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
+          e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex + 1}`)),
+          e('td', null, region.key),
+          e('td', null, region.numbers[covidDataTypes.confirmed.key]),
+          // e('td', null, region.numbers[covidDataTypes.recovered.key]),
+          e('td', null, region.numbers[covidDataTypes.deaths.key]),
+        )
+      );
+    });
   const tBody = e('tbody', null, rows);
-  return e(
-    'table', {
-      className: 'table table-hover',
-      ref: regionsTableRef,
-      id: 'regions-table',
-      'data-toggle': 'table',
-      'data-search': true,
-      'data-height': 400,
-      'data-sort-name': 'confirmed',
-      'data-sort-order': 'desc',
-      'data-sort-stable': true,
-      'data-search-align': 'left',
-      'data-click-to-select': true,
-      'data-checkbox-header': false,
-    },
-    tHead,
-    tBody
+  return (
+    e('div', null,
+      e('div', {className: 'table-responsive covid-data-table-wrapper'},
+        e('table', {className: 'table table-hover'}, tHead, tBody)
+      ),
+      e('small', {className: 'text-muted'}, '* Table is scrollable')
+    )
   );
 }
 
-function LastUpdatedDate({covidData}) {
-  const lastUpdatedDate = getLastUpdatedDate(covidData);
-  return e('small', {className: 'text-muted'},
-    'Last updated: ',
-    e('span', {className: 'badge badge-dark'}, lastUpdatedDate)
+function ColumnSorter({sortDirection}) {
+  const className = sortDirection ? 'ml-2' : 'ml-2 text-muted';
+  let sorter = null;
+  if (!sortDirection) {
+    sorter = e('i', {className: 'fas fa-sort'});
+  } else if (sortDirection === covidSortDirections.asc.key) {
+    sorter = e('i', {className: 'fas fa-sort-up'});
+  } else {
+    sorter = e('i', {className: 'fas fa-sort-down'});
+  }
+  return (
+    e('span', {className}, sorter)
   );
 }
 
