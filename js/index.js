@@ -78,11 +78,11 @@ function App() {
       e('div', {className: 'mb-4'},
         e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes})
       ),
-      e('div', {className: 'mb-4'},
-        e(CountryGrouper, {onChange: onGroupByCountries})
+      e('div', {className: 'mb-1'},
+        e(TableFilters, {groupByCountry, onGroupByCountries})
       ),
       e('div', {className: 'mb-4'},
-        e(Regions, {covidData: covidDataInUse, onRegionChange})
+        e(Regions, {covidData: covidDataInUse, selectedRegions, onRegionChange})
       ),
     )
   );
@@ -101,8 +101,6 @@ function CovidChart({covidData, regions, selectedTypes}) {
   } else if (screenWidth > 1000) {
     aspectRatio = 4;
   }
-  let chartWidth = 100;
-  let chartHeight = chartWidth * aspectRatio;
 
   r.useEffect(() => {
     if (!canvasRef.current) {
@@ -151,7 +149,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
 
 function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
   const dataTypes = Object.values(covidDataTypes).map(dataType => {
-    const checked = selectedTypes.includes(dataType.key);
+    const checked = !!selectedTypes.includes(dataType.key);
     return e(DataType, {key: dataType.key, covidData, selectedRegions, dataType, checked, onTypeChange})
   });
   return e('form', {className: 'form-inline'}, dataTypes);
@@ -187,62 +185,36 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
-function Regions({covidData, onRegionChange}) {
-  const regionsTableRef = r.useRef(null);
-  // r.useEffect(() => {
-  //   if (!regionsTableRef.current) {
-  //     return;
-  //   }
-  //   $(regionsTableRef.current).bootstrapTable({
-  //     onCheck: (row) => {
-  //       onRegionChange(row.region);
-  //     },
-  //     onUncheck: (row) => {
-  //       onRegionChange(row.region);
-  //     },
-  //   });
-  // }, [onRegionChange, covidData]);
-  const tHead = e(
-    'thead', {className: 'thead-dark'},
-    e(
-      'tr', null,
-      e('th', {'data-checkbox': true}, ''),
-      e('th', {'data-field': 'region', 'data-sortable': true}, 'Regions'),
-      e('th', {'data-field': 'confirmed', 'data-sortable': true}, 'Confirmed'),
-      // e('th', {'data-field': 'recovered', 'data-sortable': true}, 'Recovered'),
-      e('th', {'data-field': 'deaths', 'data-sortabrecoveredle': true}, 'Deaths'),
-    ),
+function Regions({covidData, selectedRegions, onRegionChange}) {
+  const tHead = (
+    e('thead', {className: 'thead-dark'},
+      e('tr', null,
+        e('th', null, ''),
+        e('th', null, ''),
+        e('th', null, 'Regions'),
+        e('th', null, 'Confirmed'),
+        // e('th', null, 'Recovered'),
+        e('th', null, 'Deaths'),
+      ),
+    )
   );
-  const rows = getCovidRegions(covidData).map((region) => {
-    return e(
-      'tr', {key: region.key},
-      e('td', null),
-      e('td', null, region.key),
-      e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-      // e('td', null, region.numbers[covidDataTypes.recovered.key]),
-      e('td', null, region.numbers[covidDataTypes.deaths.key]),
+  const rows = getCovidRegions(covidData).map((region, regionIndex) => {
+    const checked = !!selectedRegions.includes(region.key);
+    return (
+      e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
+        e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
+        e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex}`)),
+        e('td', null, region.key),
+        e('td', null, region.numbers[covidDataTypes.confirmed.key]),
+        // e('td', null, region.numbers[covidDataTypes.recovered.key]),
+        e('td', null, region.numbers[covidDataTypes.deaths.key]),
+      )
     );
   });
   const tBody = e('tbody', null, rows);
   return (
     e('div', {className: 'table-responsive covid-data-table-wrapper'},
-      e('table', {
-        className: 'table table-hover',
-        ref: regionsTableRef,
-        id: 'regions-table',
-        'data-toggle': 'table',
-        'data-search': true,
-        'data-height': 400,
-        'data-sort-name': 'confirmed',
-        'data-sort-order': 'desc',
-        'data-sort-stable': true,
-        'data-search-align': 'left',
-        'data-click-to-select': true,
-        'data-checkbox-header': false,
-      },
-      tHead,
-      tBody
-      )
+      e('table', {className: 'table table-hover'}, tHead, tBody)
     )
   );
 }
@@ -266,11 +238,19 @@ function Spinner() {
   );
 }
 
-function CountryGrouper({onChange}) {
+function TableFilters({groupByCountry, onGroupByCountries}) {
+  return (
+    e('div', null,
+      e(CountryGrouper, {groupByCountry, onGroupByCountries})
+    )
+  );
+}
+
+function CountryGrouper({groupByCountry, onGroupByCountries}) {
   return (
     e('label', null,
       e('div', {className: 'form-group form-check mb-0'},
-        e('input', {type: 'checkbox', className: 'form-check-input', onChange}),
+        e('input', {type: 'checkbox', className: 'form-check-input', onChange: onGroupByCountries, checked: groupByCountry}),
         e('div', {className: 'form-check-label'},
           'Group by countries'
         )
