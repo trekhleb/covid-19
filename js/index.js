@@ -322,7 +322,7 @@ function RegionsTable({
       return (
         e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
           e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
-          e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex}`)),
+          e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex + 1}`)),
           e('td', null, region.key),
           e('td', null, region.numbers[covidDataTypes.confirmed.key]),
           // e('td', null, region.numbers[covidDataTypes.recovered.key]),
