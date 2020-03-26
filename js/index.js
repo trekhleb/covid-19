@@ -17,6 +17,9 @@ function App() {
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
   const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
 
+  const [dataSort, setDataSort] = r.useState(covidSorts.confirmed.key);
+  const [dataSortDirection, setDataSortDirection] = r.useState(covidSortDirections.desc.key);
+
   const selectedRegionsRef = r.useRef([...selectedRegions]);
 
   const onRegionChange = (changedRegionKey) => {
@@ -36,6 +39,11 @@ function App() {
       setSelectedRegions(newRegions);
       selectedRegionsRef.current = newRegions;
     }
+  };
+
+  const onDataSort = (dataSortKey, dataSortDirectionKey) => {
+    setDataSort(dataSortKey);
+    setDataSortDirection(dataSortDirectionKey);
   };
 
   const onTypeChange = (dataTypeKey) => {
@@ -88,7 +96,15 @@ function App() {
         e(TableFilters, {groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch})
       ),
       e('div', {className: 'mb-4'},
-        e(RegionsTable, {covidData: covidDataInUse, selectedRegions, onRegionChange, countrySearchQuery})
+        e(RegionsTable, {
+          covidData: covidDataInUse,
+          selectedRegions,
+          onRegionChange,
+          countrySearchQuery,
+          dataSort,
+          dataSortDirection,
+          onDataSort,
+        })
       ),
     )
   );
@@ -233,7 +249,15 @@ function CountryGrouper({groupByCountry, onGroupByCountries}) {
   )
 }
 
-function RegionsTable({covidData, selectedRegions, onRegionChange, countrySearchQuery}) {
+function RegionsTable({
+  covidData,
+  selectedRegions,
+  onRegionChange,
+  countrySearchQuery,
+  dataSort,
+  dataSortDirection,
+  onDataSort,
+}) {
   const tHead = (
     e('thead', {className: 'thead-dark'},
       e('tr', null,
@@ -253,6 +277,26 @@ function RegionsTable({covidData, selectedRegions, onRegionChange, countrySearch
       }
       return region.key.search(new RegExp(countrySearchQuery, 'i')) >= 0;
     })
+    .sort((regionA, regionB) => {
+      let sortCriteriaA;
+      let sortCriteriaB;
+      switch (dataSort) {
+        case covidSorts.country.key:
+          sortCriteriaA = regionA.key;
+          sortCriteriaB = regionB.key;
+          break;
+        default:
+          sortCriteriaA = regionA.numbers[covidSorts[dataSort].dataKey];
+          sortCriteriaB = regionB.numbers[covidSorts[dataSort].dataKey];
+      }
+      if (sortCriteriaA === sortCriteriaB) {
+        return 0;
+      }
+      if (sortCriteriaA > sortCriteriaB) {
+        return dataSortDirection === covidSortDirections.desc.key ? -1 : 1;
+      }
+      return dataSortDirection === covidSortDirections.desc.key ? 1 : -1;
+    })
     .map((region, regionIndex) => {
       const checked = !!selectedRegions.includes(region.key);
       return (
@@ -268,8 +312,11 @@ function RegionsTable({covidData, selectedRegions, onRegionChange, countrySearch
     });
   const tBody = e('tbody', null, rows);
   return (
-    e('div', {className: 'table-responsive covid-data-table-wrapper'},
-      e('table', {className: 'table table-hover'}, tHead, tBody)
+    e('div', null,
+      e('div', {className: 'table-responsive covid-data-table-wrapper'},
+        e('table', {className: 'table table-hover'}, tHead, tBody)
+      ),
+      e('small', {className: 'text-muted'}, '* Table is scrollable')
     )
   );
 }

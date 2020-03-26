@@ -42,6 +42,29 @@ const covidCountries = {
   }
 };
 
+const covidSorts = {
+  country: {
+    key: 'country',
+  },
+  confirmed: {
+    key: 'confirmed',
+    dataKey: covidDataTypes.confirmed.key,
+  },
+  deaths: {
+    key: 'deaths',
+    dataKey: covidDataTypes.deaths.key,
+  },
+};
+
+const covidSortDirections = {
+  asc: {
+    key: 'asc',
+  },
+  desc: {
+    key: 'desc',
+  },
+};
+
 function loadCovidData() {
   const defaultDataContainer = {
     labels: [],
