@@ -8,3 +8,7 @@
   top: 0;
   box-shadow: 0 0 0 1px #343a40;
 }
+
+.covid-data-table-wrapper > table > thead th[sortable] {
+  cursor: pointer;
+}

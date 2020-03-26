@@ -258,15 +258,24 @@ function RegionsTable({
   dataSortDirection,
   onDataSort,
 }) {
+  const onColumnSort = (columnName) => {
+    if (columnName === dataSort) {
+      const newDataSortDirection =
+        dataSortDirection === covidSortDirections.asc.key ? covidSortDirections.desc.key : covidSortDirections.asc.key;
+      onDataSort(columnName, newDataSortDirection);
+    } else {
+      onDataSort(columnName, dataSortDirection);
+    }
+  };
   const tHead = (
     e('thead', {className: 'thead-dark'},
       e('tr', null,
         e('th', null, ''),
         e('th', null, ''),
-        e('th', null, 'Regions'),
-        e('th', null, 'Confirmed'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.country.key)}, 'Regions'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)}, 'Confirmed'),
         // e('th', null, 'Recovered'),
-        e('th', null, 'Deaths'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.deaths.key)}, 'Deaths'),
       ),
     )
   );
