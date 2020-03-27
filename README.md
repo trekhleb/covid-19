@@ -16,7 +16,7 @@ Here is how the main functionality looks like:
 
 The dashboard is using [COVID-19 (2019-nCoV) Data Repository by Johns Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19) as a data source.
 
-Front-end wise I've tried to make it as simple as possible, therefore the dashboard is using a pure [React.js](https://reactjs.org/) (without `JSX` transpiler or `CreateReactApp` starter). To display the data I've used [Charts.js](https://www.chartjs.org/) to draw the chart and [Bootstrap Table](https://bootstrap-table.com/) to display a sortable, searchable and clickable data table.
+Front-end wise I've tried to make it as simple as possible, therefore the dashboard is using a pure [React.js](https://reactjs.org/) (without `JSX` transpiler or `CreateReactApp` starter). To draw the chart I've used [Charts.js](https://www.chartjs.org/).
 
 ### Main Functionality
 
