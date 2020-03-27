@@ -128,29 +128,19 @@ function DataTypes({covidData, selectedRegions, selectedTypes, onTypeChange}) {
 }
 
 function DataType({covidData, selectedRegions, dataType, checked, onTypeChange}) {
-  const alertClasses = {
-    [covidDataTypes.confirmed.key]: 'alert alert-warning mr-3 mb-3',
-    // [covidDataTypes.recovered.key]: 'alert alert-success mr-3 mb-3',
-    [covidDataTypes.deaths.key]: 'alert alert-danger mr-3 mb-3',
-  };
-  const badgeClasses = {
-    [covidDataTypes.confirmed.key]: 'badge badge-warning ml-2 ',
-    // [covidDataTypes.recovered.key]: 'badge badge-success ml-2 ',
-    [covidDataTypes.deaths.key]: 'badge badge-danger ml-2 ',
-  };
-  const alertClass = alertClasses[dataType.key];
-  const badgeClass = badgeClasses[dataType.key];
+  const alertClass = covidDataTypes[dataType.key].alertClass;
+  const badgeClass = covidDataTypes[dataType.key].badgeClass;
   const totalCount = getTotalCount(covidData, dataType.key, selectedRegions);
   const onChange = () => {
     onTypeChange(dataType.key);
   };
   return (
-    e('label', {className: alertClass},
+    e('label', {className: `alert ${alertClass} mr-3 mb-3`},
       e('div', {className: 'form-group form-check mb-0'},
         e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
         e('div', {className: 'form-check-label'},
           dataType.title,
-          e('span', {className: badgeClass}, totalCount.toLocaleString())
+          e('span', {className: `badge ${badgeClass} ml-2`}, totalCount.toLocaleString())
         )
       )
     )
@@ -279,12 +269,15 @@ function RegionsTable({
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.country.key ? dataSortDirection : null})
         ),
         e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.confirmed.key)},
-          'Confirmed',
+          covidDataTypes.confirmed.title,
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.confirmed.key ? dataSortDirection : null})
         ),
-        // e('th', null, 'Recovered'),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.recovered.key)},
+          covidDataTypes.recovered.title,
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.recovered.key ? dataSortDirection : null})
+        ),
         e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.deaths.key)},
-          'Deaths',
+          covidDataTypes.deaths.title,
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
         ),
       ),
@@ -325,7 +318,7 @@ function RegionsTable({
           e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex + 1}`)),
           e('td', null, region.key),
           e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-          // e('td', null, region.numbers[covidDataTypes.recovered.key]),
+          e('td', null, region.numbers[covidDataTypes.recovered.key]),
           e('td', null, region.numbers[covidDataTypes.deaths.key]),
         )
       );

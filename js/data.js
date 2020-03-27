@@ -19,18 +19,24 @@ const covidDataTypes = {
     title: 'Confirmed',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
     borderColor: confirmedPalette,
+    alertClass: 'alert-warning',
+    badgeClass: 'badge-warning',
   },
-  // recovered: {
-  //   key: 'recovered',
-  //   title: 'Recovered',
-  //   dataSourceUrl: `${covidDataBaseURL}/time_series_19-covid-Recovered.csv`,
-  //   borderColor: recoveredPalette,
-  // },
+  recovered: {
+    key: 'recovered',
+    title: 'Recovered',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_recovered_global.csv`,
+    borderColor: recoveredPalette,
+    alertClass: 'alert-success',
+    badgeClass: 'badge-success',
+  },
   deaths: {
     key: 'deaths',
     title: 'Deaths',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
+    alertClass: 'alert-danger',
+    badgeClass: 'badge-danger',
   },
 };
 
@@ -49,6 +55,10 @@ const covidSorts = {
   confirmed: {
     key: 'confirmed',
     dataKey: covidDataTypes.confirmed.key,
+  },
+  recovered: {
+    key: 'recovered',
+    dataKey: covidDataTypes.recovered.key,
   },
   deaths: {
     key: 'deaths',
@@ -117,6 +127,9 @@ function loadCovidData() {
 }
 
 function getRegionKey(regionTicks) {
+  if (!regionTicks || !regionTicks.length) {
+    return null;
+  }
   const country = regionTicks[covidSchema.countryColumn];
   const state = regionTicks[covidSchema.stateColumn];
   return state ? `${country} - ${state}` : `${country}`;
@@ -163,18 +176,33 @@ function getTotalCount(covidData, dataTypeKey, regionKeys) {
   }, 0);
 }
 
+function searchRegionTicks(covidData, dataTypeKey, regionKey) {
+  if (!regionKey) {
+    return null;
+  }
+  const regionsTicks = covidData.ticks[dataTypeKey];
+  return regionsTicks.find((regionTicks) => getRegionKey(regionTicks) === regionKey);
+}
+
 function getCovidRegions(covidData) {
   return covidData.ticks[covidDataTypes.confirmed.key]
     .map((regionTicks, regionIndex) => {
       const key = getRegionKey(regionTicks);
-      const confirmedRow = covidData.ticks[covidDataTypes.confirmed.key][regionIndex];
-      // const recoveredRow = covidData.ticks[covidDataTypes.recovered.key][regionIndex];
-      const deathsRow = covidData.ticks[covidDataTypes.deaths.key][regionIndex];
-      const numbers = {
-        [covidDataTypes.confirmed.key]: confirmedRow[confirmedRow.length - 1],
-        // [covidDataTypes.recovered.key]: recoveredRow[recoveredRow.length - 1],
-        [covidDataTypes.deaths.key]: deathsRow[deathsRow.length - 1],
-      };
+      const numbers = {};
+      Object.values(covidDataTypes).forEach((covidDataType) => {
+        const regionTicksOfType = covidData.ticks[covidDataType.key][regionIndex];
+        const regionKeyOfType = getRegionKey(regionTicksOfType);
+        if (regionTicksOfType && regionTicksOfType.length === regionTicks.length && regionKeyOfType && regionKeyOfType === key) {
+          numbers[covidDataType.key] = regionTicksOfType[regionTicksOfType.length - 1];
+        } else {
+          const foundRegionTicks = searchRegionTicks(covidData, covidDataType.key, key);
+          if (foundRegionTicks && foundRegionTicks.length === regionTicks.length) {
+            numbers[covidDataType.key] = foundRegionTicks[foundRegionTicks.length - 1];
+          } else {
+            numbers[covidDataType.key] = -1;
+          }
+        }
+      });
       return {key, numbers};
     });
 }
