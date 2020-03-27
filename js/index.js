@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
   rd.render(e(App), document.getElementById('root'));
 });
 
+function roundTwoDecimals(num) {
+  return +(Math.round(num + "e+2")  + "e-2");
+}
+
 function App() {
   const [covidData, setCovidData] = r.useState(null);
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
@@ -15,6 +19,7 @@ function App() {
   const [groupByCountry, setGroupByCountry] = r.useState(true);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
+
   const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
 
   const [dataSort, setDataSort] = r.useState(covidSorts.confirmed.key);
@@ -147,10 +152,24 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
+function Toggle({text, onValueChange}) {
+  return (
+      e('label', {},
+          e('div', {className: 'form-group form-check mb-0'},
+              e('input', {type: 'checkbox', className: 'form-check-input', onChange: (event) => onValueChange(event.target.checked)}),
+              e('div', {className: 'form-check-label'},
+                  text,
+              )
+          )
+      )
+  )
+}
+
 function CovidChart({covidData, regions, selectedTypes}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
   const [screenWidth, screenHeight] = useWindowSize();
+  const [useLogarithmicScale, setUseLogarithmicScale] = r.useState(false);
 
   let aspectRatio = 1;
   if (screenWidth > 450 && screenWidth <= 700) {
@@ -159,6 +178,15 @@ function CovidChart({covidData, regions, selectedTypes}) {
     aspectRatio = 3;
   } else if (screenWidth > 1000) {
     aspectRatio = 4;
+  }
+
+  function toLogarithmicScale(ticks) {
+    return ticks.map(t => {
+      if(t <= 0){
+        return t;
+      }
+      return roundTwoDecimals(Math.log(t))
+    });
   }
 
   r.useEffect(() => {
@@ -181,7 +209,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
-          data: ticks,
+          data: useLogarithmicScale ? toLogarithmicScale(ticks) : ticks,
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
@@ -202,8 +230,11 @@ function CovidChart({covidData, regions, selectedTypes}) {
         aspectRatio,
       },
     });
-  }, [selectedTypes, regions, aspectRatio]);
-  return e('canvas', {ref: canvasRef});
+  }, [useLogarithmicScale, selectedTypes, regions, aspectRatio]);
+  return e('div', {},
+      e('canvas', {ref: canvasRef}),
+      e(Toggle, {text: 'Logarithmic scale', onValueChange: setUseLogarithmicScale})
+  );
 }
 
 function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch}) {
