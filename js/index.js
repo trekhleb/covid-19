@@ -253,7 +253,10 @@ function TableFilters({
       e('div', {className: 'form-group form-check mr-3 mb-2'},
         e(Toggle, {text: 'Logarithmic scale', onChange: setUseLogScale, checked: useLogScale})
       ),
-      e('button', {className: 'btn btn-light mb-2', onClick: onReset}, 'Reset')
+      e('button', {className: 'btn btn-light mb-2', onClick: onReset},
+        e('i', {className: 'fas fa-trash-alt mr-2'}),
+        'Reset'
+      )
     )
   );
 }
