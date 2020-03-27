@@ -113,8 +113,7 @@ function loadCovidData() {
               const regionNameB = getRegionKey(regionTicksB);
               if (regionNameA > regionNameB) {
                 return 1;
-              }
-              else if (regionNameA < regionNameB) {
+              } else if (regionNameA < regionNameB) {
                 return -1;
               }
               return 0;
@@ -240,4 +239,14 @@ function groupCovidDataByCountries(covidData) {
       }, {}));
   });
   return covidDataByCountries;
+}
+
+function ticksToLogarithmicScale(ticks) {
+  return ticks.map((tick) => {
+    if (typeof tick === 'string' || tick <= 0) {
+      return tick;
+    }
+    const logTick = Math.log(tick);
+    return Math.round(logTick * 100) / 100;
+  });
 }

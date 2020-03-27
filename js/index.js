@@ -7,10 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   rd.render(e(App), document.getElementById('root'));
 });
 
-function roundTwoDecimals(num) {
-  return +(Math.round(num + "e+2")  + "e-2");
-}
-
 function App() {
   const [covidData, setCovidData] = r.useState(null);
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
@@ -19,6 +15,7 @@ function App() {
   const [groupByCountry, setGroupByCountry] = r.useState(true);
   const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
   const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
+  const [useLogScale, setUseLogScale] = r.useState(false);
 
   const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
 
@@ -95,10 +92,17 @@ function App() {
         e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes})
+        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale})
       ),
       e('div', {className: 'mb-0'},
-        e(TableFilters, {groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch})
+        e(TableFilters, {
+          groupByCountry,
+          onGroupByCountries,
+          countrySearchQuery,
+          onCountrySearch,
+          useLogScale,
+          setUseLogScale,
+        })
       ),
       e('div', {className: 'mb-4'},
         e(RegionsTable, {
@@ -152,24 +156,10 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
-function Toggle({text, onValueChange}) {
-  return (
-      e('label', {},
-          e('div', {className: 'form-group form-check mb-0'},
-              e('input', {type: 'checkbox', className: 'form-check-input', onChange: (event) => onValueChange(event.target.checked)}),
-              e('div', {className: 'form-check-label'},
-                  text,
-              )
-          )
-      )
-  )
-}
-
-function CovidChart({covidData, regions, selectedTypes}) {
+function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
   const [screenWidth, screenHeight] = useWindowSize();
-  const [useLogarithmicScale, setUseLogarithmicScale] = r.useState(false);
 
   let aspectRatio = 1;
   if (screenWidth > 450 && screenWidth <= 700) {
@@ -178,15 +168,6 @@ function CovidChart({covidData, regions, selectedTypes}) {
     aspectRatio = 3;
   } else if (screenWidth > 1000) {
     aspectRatio = 4;
-  }
-
-  function toLogarithmicScale(ticks) {
-    return ticks.map(t => {
-      if(t <= 0){
-        return t;
-      }
-      return roundTwoDecimals(Math.log(t))
-    });
   }
 
   r.useEffect(() => {
@@ -209,7 +190,7 @@ function CovidChart({covidData, regions, selectedTypes}) {
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
-          data: useLogarithmicScale ? toLogarithmicScale(ticks) : ticks,
+          data: useLogScale ? ticksToLogarithmicScale(ticks) : ticks,
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
@@ -230,21 +211,21 @@ function CovidChart({covidData, regions, selectedTypes}) {
         aspectRatio,
       },
     });
-  }, [useLogarithmicScale, selectedTypes, regions, aspectRatio]);
-  return e('div', {},
-      e('canvas', {ref: canvasRef}),
-      e(Toggle, {text: 'Logarithmic scale', onValueChange: setUseLogarithmicScale})
-  );
+  }, [useLogScale, selectedTypes, regions, aspectRatio]);
+  return e('canvas', {ref: canvasRef});
 }
 
-function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch}) {
+function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch, useLogScale, setUseLogScale}) {
   return (
     e('form', {className: 'form-inline'},
       e('div', {className: 'form-group mr-3 mb-2'},
         e(CountrySearch, {countrySearchQuery, onCountrySearch})
       ),
+      e('div', {className: 'form-group form-check mr-3 mb-2'},
+        e(Toggle, {checked: groupByCountry, onChange: onGroupByCountries, text: 'Group by countries'})
+      ),
       e('div', {className: 'form-group form-check mb-2'},
-        e(CountryGrouper, {groupByCountry, onGroupByCountries})
+        e(Toggle, {text: 'Logarithmic scale', onChange: setUseLogScale, checked: useLogScale})
       )
     )
   );
@@ -260,15 +241,6 @@ function CountrySearch({countrySearchQuery, onCountrySearch}) {
       value: countrySearchQuery,
     })
   );
-}
-
-function CountryGrouper({groupByCountry, onGroupByCountries}) {
-  return (
-    e('label', null,
-      e('input', {type: 'checkbox', className: 'form-check-input', onChange: onGroupByCountries, checked: groupByCountry}),
-      e('div', {className: 'form-check-label'}, 'Group by countries')
-    )
-  )
 }
 
 function RegionsTable({
@@ -389,4 +361,20 @@ function Spinner() {
     'div', {className: 'd-flex justify-content-center mt-5 mb-5'},
     e('div', {className: 'spinner-border'})
   );
+}
+
+function Toggle({text, checked, onChange}) {
+  return (
+    e('label', {},
+      e('div', {className: 'form-group form-check mb-0'},
+        e('input', {
+          type: 'checkbox',
+          checked: checked,
+          className: 'form-check-input',
+          onChange: (event) => onChange(event.target.checked)
+        }),
+        e('div', {className: 'form-check-label'}, text)
+      )
+    )
+  )
 }
