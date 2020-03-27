@@ -8,39 +8,50 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function App() {
+  const defaultGroupByCountry = true;
+  const defaultSelectedTypes = Object.keys(covidDataTypes);
+  const defaultSelectedRegions = [covidCountries.all.key];
+  const defaultUseLogScale = false;
+  const defaultCountrySearchQuery = '';
+  const defaultDataSort = covidSorts.confirmed.key;
+  const defaultDataSortDirection = covidSortDirections.desc.key;
+
   const [covidData, setCovidData] = r.useState(null);
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
   const [errorMessage, setErrorMessage] = r.useState(null);
 
-  const [groupByCountry, setGroupByCountry] = r.useState(true);
-  const [selectedTypes, setSelectedTypes] = r.useState(Object.keys(covidDataTypes));
-  const [selectedRegions, setSelectedRegions] = r.useState([covidCountries.all.key]);
-  const [useLogScale, setUseLogScale] = r.useState(false);
+  const [groupByCountry, setGroupByCountry] = r.useState(defaultGroupByCountry);
+  const [selectedTypes, setSelectedTypes] = r.useState(defaultSelectedTypes);
+  const [selectedRegions, setSelectedRegions] = r.useState(defaultSelectedRegions);
+  const [useLogScale, setUseLogScale] = r.useState(defaultUseLogScale);
+  const [countrySearchQuery, setCountrySearchQuery] = r.useState(defaultCountrySearchQuery);
 
-  const [countrySearchQuery, setCountrySearchQuery] = r.useState('');
-
-  const [dataSort, setDataSort] = r.useState(covidSorts.confirmed.key);
-  const [dataSortDirection, setDataSortDirection] = r.useState(covidSortDirections.desc.key);
-
-  const selectedRegionsRef = r.useRef([...selectedRegions]);
+  const [dataSort, setDataSort] = r.useState(defaultDataSort);
+  const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
 
   const onRegionChange = (changedRegionKey) => {
-    const currentRegions = selectedRegionsRef.current;
-    if (currentRegions.includes(changedRegionKey)) {
-      const newRegions = [...currentRegions.filter(regionKey => regionKey !== changedRegionKey)];
+    if (selectedRegions.includes(changedRegionKey)) {
+      const newRegions = [...selectedRegions.filter(regionKey => regionKey !== changedRegionKey)];
       if (newRegions.length) {
         setSelectedRegions(newRegions);
-        selectedRegionsRef.current = newRegions;
       } else {
         const newRegions = [covidCountries.all.key];
         setSelectedRegions(newRegions);
-        selectedRegionsRef.current = newRegions;
       }
     } else {
-      const newRegions = [...currentRegions.filter(regionKey => regionKey !== covidCountries.all.key), changedRegionKey];
+      const newRegions = [...selectedRegions.filter(regionKey => regionKey !== covidCountries.all.key), changedRegionKey];
       setSelectedRegions(newRegions);
-      selectedRegionsRef.current = newRegions;
     }
+  };
+
+  const onFiltersReset = () => {
+    setGroupByCountry(defaultGroupByCountry);
+    setSelectedTypes(defaultSelectedTypes);
+    setSelectedRegions(defaultSelectedRegions);
+    setUseLogScale(defaultUseLogScale);
+    setCountrySearchQuery(defaultCountrySearchQuery);
+    setDataSort(defaultDataSort);
+    setDataSortDirection(defaultDataSortDirection);
   };
 
   const onDataSort = (dataSortKey, dataSortDirectionKey) => {
@@ -62,6 +73,7 @@ function App() {
   };
 
   const onGroupByCountries = () => {
+    setSelectedRegions(defaultSelectedRegions);
     setGroupByCountry(!groupByCountry);
   };
 
@@ -96,6 +108,7 @@ function App() {
       ),
       e('div', {className: 'mb-0'},
         e(TableFilters, {
+          onFiltersReset,
           groupByCountry,
           onGroupByCountries,
           countrySearchQuery,
@@ -215,7 +228,20 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
   return e('canvas', {ref: canvasRef});
 }
 
-function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, onCountrySearch, useLogScale, setUseLogScale}) {
+function TableFilters({
+  onFiltersReset,
+  groupByCountry,
+  onGroupByCountries,
+  countrySearchQuery,
+  onCountrySearch,
+  useLogScale,
+  setUseLogScale,
+}) {
+  const onReset = (e) => {
+    e.preventDefault();
+    onFiltersReset();
+  };
+
   return (
     e('form', {className: 'form-inline'},
       e('div', {className: 'form-group mr-3 mb-2'},
@@ -224,9 +250,10 @@ function TableFilters({groupByCountry, onGroupByCountries, countrySearchQuery, o
       e('div', {className: 'form-group form-check mr-3 mb-2'},
         e(Toggle, {checked: groupByCountry, onChange: onGroupByCountries, text: 'Group by countries'})
       ),
-      e('div', {className: 'form-group form-check mb-2'},
+      e('div', {className: 'form-group form-check mr-3 mb-2'},
         e(Toggle, {text: 'Logarithmic scale', onChange: setUseLogScale, checked: useLogScale})
-      )
+      ),
+      e('button', {className: 'btn btn-light mb-2', onClick: onReset}, 'Reset')
     )
   );
 }
