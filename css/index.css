@@ -11,4 +11,5 @@
 
 .covid-data-table-wrapper > table > thead th[sortable] {
   cursor: pointer;
+  white-space: nowrap;
 }
