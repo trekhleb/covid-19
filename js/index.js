@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function App() {
-  const defaultGroupByCountry = true;
-  const defaultSelectedTypes = Object.keys(covidDataTypes);
-  const defaultSelectedRegions = [covidCountries.all.key];
-  const defaultUseLogScale = false;
-  const defaultCountrySearchQuery = '';
-  const defaultDataSort = covidSorts.confirmed.key;
-  const defaultDataSortDirection = covidSortDirections.desc.key;
+  const defaultGroupByCountry = covidFilters.groupByCountry.defaultValue;
+  const defaultSelectedTypes = covidFilters.selectedTypes.defaultValue;
+  const defaultSelectedRegions = covidFilters.selectedRegions.defaultValue;
+  const defaultUseLogScale = covidFilters.useLogScale.defaultValue;
+  const defaultCountrySearchQuery = covidFilters.countrySearchQuery.defaultValue;
+  const defaultDataSort = covidFilters.dataSort.defaultValue;
+  const defaultDataSortDirection = covidFilters.dataSortDirection.defaultValue;
 
   const [covidData, setCovidData] = r.useState(null);
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
@@ -29,21 +29,6 @@ function App() {
   const [dataSort, setDataSort] = r.useState(defaultDataSort);
   const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
 
-  const onRegionChange = (changedRegionKey) => {
-    if (selectedRegions.includes(changedRegionKey)) {
-      const newRegions = [...selectedRegions.filter(regionKey => regionKey !== changedRegionKey)];
-      if (newRegions.length) {
-        setSelectedRegions(newRegions);
-      } else {
-        const newRegions = [covidCountries.all.key];
-        setSelectedRegions(newRegions);
-      }
-    } else {
-      const newRegions = [...selectedRegions.filter(regionKey => regionKey !== covidCountries.all.key), changedRegionKey];
-      setSelectedRegions(newRegions);
-    }
-  };
-
   const onFiltersReset = () => {
     setGroupByCountry(defaultGroupByCountry);
     setSelectedTypes(defaultSelectedTypes);
@@ -52,19 +37,44 @@ function App() {
     setCountrySearchQuery(defaultCountrySearchQuery);
     setDataSort(defaultDataSort);
     setDataSortDirection(defaultDataSortDirection);
+    deleteFiltersFromUrl();
+  };
+
+  const onRegionChange = (changedRegionKey) => {
+    let newRegions;
+    if (selectedRegions.includes(changedRegionKey)) {
+      newRegions = [...selectedRegions.filter(regionKey => regionKey !== changedRegionKey)];
+      if (!newRegions.length) {
+        newRegions = [covidCountries.all.key];
+      }
+    } else {
+      newRegions = [...selectedRegions.filter(regionKey => regionKey !== covidCountries.all.key), changedRegionKey];
+    }
+    setSelectedRegions(newRegions);
+    filterToUrl(covidFilters.selectedRegions.key, newRegions);
+  };
+
+  const onUseLogScale = (useLog) => {
+    setUseLogScale(useLog);
+    filterToUrl(covidFilters.useLogScale.key, useLog);
   };
 
   const onDataSort = (dataSortKey, dataSortDirectionKey) => {
     setDataSort(dataSortKey);
     setDataSortDirection(dataSortDirectionKey);
+    filterToUrl(covidFilters.dataSort.key, dataSortKey);
+    filterToUrl(covidFilters.dataSortDirection.key, dataSortDirectionKey);
   };
 
   const onTypeChange = (dataTypeKey) => {
+    let newSelectedTypes;
     if (selectedTypes.includes(dataTypeKey)) {
-      setSelectedTypes([...selectedTypes.filter(dataType => dataType !== dataTypeKey)]);
+      newSelectedTypes = [...selectedTypes.filter(dataType => dataType !== dataTypeKey)];
     } else {
-      setSelectedTypes([...selectedTypes, dataTypeKey]);
+      newSelectedTypes = [...selectedTypes, dataTypeKey];
     }
+    setSelectedTypes(newSelectedTypes);
+    filterToUrl(covidFilters.selectedTypes.key, newSelectedTypes);
   };
 
   const onCountrySearch = (query) => {
@@ -73,8 +83,11 @@ function App() {
   };
 
   const onGroupByCountries = () => {
+    const newGroupByCountry = !groupByCountry;
     setSelectedRegions(defaultSelectedRegions);
-    setGroupByCountry(!groupByCountry);
+    setGroupByCountry(newGroupByCountry);
+    filterToUrl(covidFilters.groupByCountry.key, newGroupByCountry);
+    filterToUrl(covidFilters.selectedRegions.key, defaultSelectedRegions);
   };
 
   r.useEffect(() => {
@@ -84,6 +97,34 @@ function App() {
         setCovidDataByCountries(groupCovidDataByCountries(data));
       })
       .catch(() => setErrorMessage('Cannot fetch the statistics data. It might be a network issue. Try to refresh the page.'));
+  }, []);
+
+  r.useEffect(() => {
+    const populatedFilters = filtersFromUrl();
+
+    if (populatedFilters.hasOwnProperty(covidFilters.groupByCountry.key)) {
+      setGroupByCountry(populatedFilters[covidFilters.groupByCountry.key]);
+    }
+
+    if (populatedFilters.hasOwnProperty(covidFilters.useLogScale.key)) {
+      setUseLogScale(populatedFilters[covidFilters.useLogScale.key]);
+    }
+
+    if (populatedFilters.hasOwnProperty(covidFilters.selectedTypes.key)) {
+      setSelectedTypes(populatedFilters[covidFilters.selectedTypes.key]);
+    }
+
+    if (populatedFilters.hasOwnProperty(covidFilters.selectedRegions.key)) {
+      setSelectedRegions(populatedFilters[covidFilters.selectedRegions.key]);
+    }
+
+    if (populatedFilters.hasOwnProperty(covidFilters.dataSort.key)) {
+      setDataSort(populatedFilters[covidFilters.dataSort.key]);
+    }
+
+    if (populatedFilters.hasOwnProperty(covidFilters.dataSortDirection.key)) {
+      setDataSortDirection(populatedFilters[covidFilters.dataSortDirection.key]);
+    }
   }, []);
 
   if (errorMessage) {
@@ -114,7 +155,7 @@ function App() {
           countrySearchQuery,
           onCountrySearch,
           useLogScale,
-          setUseLogScale,
+          onUseLogScale,
         })
       ),
       e('div', {className: 'mb-4'},
@@ -235,7 +276,7 @@ function TableFilters({
   countrySearchQuery,
   onCountrySearch,
   useLogScale,
-  setUseLogScale,
+  onUseLogScale,
 }) {
   const onReset = (e) => {
     e.preventDefault();
@@ -251,11 +292,11 @@ function TableFilters({
         e(Toggle, {checked: groupByCountry, onChange: onGroupByCountries, text: 'Group by countries'})
       ),
       e('div', {className: 'form-group form-check mr-3 mb-2'},
-        e(Toggle, {text: 'Logarithmic scale', onChange: setUseLogScale, checked: useLogScale})
+        e(Toggle, {text: 'Logarithmic scale', onChange: onUseLogScale, checked: useLogScale})
       ),
-      e('button', {className: 'btn btn-light mb-2', onClick: onReset},
+      e('button', {className: 'btn btn-dark mb-2', onClick: onReset},
         e('i', {className: 'fas fa-trash-alt mr-2'}),
-        'Reset'
+        'Reset Filters'
       )
     )
   );
@@ -321,7 +362,9 @@ function RegionsTable({
       if (!countrySearchQuery) {
         return true;
       }
-      return region.key.search(new RegExp(countrySearchQuery, 'i')) >= 0;
+      return region.key.search(
+        new RegExp(countrySearchQuery.trim(), 'i')
+      ) >= 0;
     })
     .sort((regionA, regionB) => {
       let sortCriteriaA;

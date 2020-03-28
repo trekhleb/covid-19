@@ -75,6 +75,37 @@ const covidSortDirections = {
   },
 };
 
+const covidFilters = {
+  selectedTypes: {
+    key: 'selectedTypes',
+    defaultValue: Object.keys(covidDataTypes),
+  },
+  groupByCountry: {
+    key: 'groupByCountry',
+    defaultValue: true,
+  },
+  selectedRegions: {
+    key: 'selectedRegions',
+    defaultValue: [covidCountries.all.key]
+  },
+  useLogScale: {
+    key: 'useLogScale',
+    defaultValue: false,
+  },
+  countrySearchQuery: {
+    key: 'countrySearchQuery',
+    defaultValue: '',
+  },
+  dataSort: {
+    key: 'dataSort',
+    defaultValue: covidSorts.confirmed.key,
+  },
+  dataSortDirection: {
+    key: 'dataSortDirection',
+    defaultValue: covidSortDirections.desc.key,
+  },
+};
+
 function loadCovidData() {
   const defaultDataContainer = {
     labels: [],
@@ -249,4 +280,43 @@ function ticksToLogarithmicScale(ticks) {
     const logTick = Math.log(tick);
     return Math.round(logTick * 100) / 100;
   });
+}
+
+function filterToUrl(filterKey, filterValue) {
+  try {
+    const url = new URL(document.location);
+    url.searchParams.set(filterKey, JSON.stringify(filterValue));
+    history.pushState(null, null, url.href);
+  } catch (e) {
+    console.error('Cannot send filters to URL');
+  }
+}
+
+function filtersFromUrl() {
+  const filtersInUrl = {};
+  try {
+    const url = new URL(document.location);
+    Object.values(covidFilters).forEach((covidFilter) => {
+      if (url.searchParams.has(covidFilter.key)) {
+        filtersInUrl[covidFilter.key] = JSON.parse(
+          url.searchParams.get(covidFilter.key)
+        );
+      }
+    });
+  } catch (e) {
+    console.error('Cannot fetch filters from URL');
+  }
+  return filtersInUrl;
+}
+
+function deleteFiltersFromUrl() {
+  try {
+    const url = new URL(document.location);
+    Object.values(covidFilters).forEach((covidFilter) => {
+      url.searchParams.delete(covidFilter.key);
+    });
+    history.pushState(null, null, url.href);
+  } catch (e) {
+    console.error('Cannot delete filters from URL');
+  }
 }
