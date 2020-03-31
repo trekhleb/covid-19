@@ -390,14 +390,17 @@ function RegionsTable({
     })
     .map((region, regionIndex) => {
       const checked = !!selectedRegions.includes(region.key);
+      const confirmedNumber = region.numbers[covidDataTypes.confirmed.key] >= 0 ? region.numbers[covidDataTypes.confirmed.key] : '';
+      const recoveredNumber = region.numbers[covidDataTypes.recovered.key] >= 0 ? region.numbers[covidDataTypes.recovered.key] : '';
+      const deathsNumber = region.numbers[covidDataTypes.deaths.key] >= 0 ? region.numbers[covidDataTypes.deaths.key] : '';
       return (
         e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
           e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
           e('td', null, e('small', {className: 'text-muted'}, `#${regionIndex + 1}`)),
           e('td', null, region.key),
-          e('td', null, region.numbers[covidDataTypes.confirmed.key]),
-          e('td', null, region.numbers[covidDataTypes.recovered.key]),
-          e('td', null, region.numbers[covidDataTypes.deaths.key]),
+          e('td', null, confirmedNumber),
+          e('td', null, recoveredNumber),
+          e('td', null, deathsNumber),
         )
       );
     });
