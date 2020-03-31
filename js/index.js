@@ -356,6 +356,10 @@ function RegionsTable({
           covidDataTypes.deaths.title,
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
         ),
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.mortality.key)},
+          'Mortality',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.mortality.key ? dataSortDirection : null})
+        ),
       ),
     )
   );
@@ -376,6 +380,16 @@ function RegionsTable({
           sortCriteriaA = regionA.key;
           sortCriteriaB = regionB.key;
           break;
+        case covidSorts.mortality.key:
+          sortCriteriaA = calculateMortality(
+            regionA.numbers[covidDataTypes.confirmed.key],
+            regionA.numbers[covidDataTypes.deaths.key]
+          );
+          sortCriteriaB = calculateMortality(
+            regionB.numbers[covidDataTypes.confirmed.key],
+            regionB.numbers[covidDataTypes.deaths.key]
+          );
+          break;
         default:
           sortCriteriaA = regionA.numbers[covidSorts[dataSort].dataKey];
           sortCriteriaB = regionB.numbers[covidSorts[dataSort].dataKey];
@@ -393,6 +407,13 @@ function RegionsTable({
       const confirmedNumber = region.numbers[covidDataTypes.confirmed.key] >= 0 ? region.numbers[covidDataTypes.confirmed.key] : '';
       const recoveredNumber = region.numbers[covidDataTypes.recovered.key] >= 0 ? region.numbers[covidDataTypes.recovered.key] : '';
       const deathsNumber = region.numbers[covidDataTypes.deaths.key] >= 0 ? region.numbers[covidDataTypes.deaths.key] : '';
+
+      const mortality = calculateMortality(
+        region.numbers[covidDataTypes.confirmed.key],
+        region.numbers[covidDataTypes.deaths.key]
+      );
+      let mortalityNumber = `${mortality}%`;
+
       return (
         e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
           e('td', null, e('input', {type: 'checkbox', checked, onChange: () => {}})),
@@ -401,6 +422,7 @@ function RegionsTable({
           e('td', null, confirmedNumber),
           e('td', null, recoveredNumber),
           e('td', null, deathsNumber),
+          e('td', null, e('small', {className: 'text-muted'}, mortalityNumber)),
         )
       );
     });

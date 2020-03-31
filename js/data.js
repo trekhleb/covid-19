@@ -64,6 +64,9 @@ const covidSorts = {
     key: 'deaths',
     dataKey: covidDataTypes.deaths.key,
   },
+  mortality: {
+    key: 'mortality',
+  },
 };
 
 const covidSortDirections = {
@@ -322,4 +325,15 @@ function deleteFiltersFromUrl() {
   } catch (e) {
     console.error('Cannot delete filters from URL');
   }
+}
+
+function calculateMortality(confirmedNumber, deathsNumber) {
+  if (confirmedNumber === 0) {
+    return 0;
+  }
+  const mortality = deathsNumber / confirmedNumber;
+  if (mortality < 0) {
+    return 0;
+  }
+  return Math.floor(1000 * mortality) / 10;
 }
