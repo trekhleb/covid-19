@@ -201,6 +201,9 @@ function getTotalCount(covidData, dataTypeKey, regionKeys) {
   }
   return regionKeys.reduce((total, regionKey) => {
     const regionTicks = getRegionByKey(covidData, dataTypeKey, regionKey);
+    if (!regionTicks) {
+      return total;
+    }
     total += regionTicks[regionTicks.length - 1];
     return total;
   }, 0);

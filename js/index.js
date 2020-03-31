@@ -239,7 +239,9 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
           ticks = getGlobalTicks(covidData, dataTypeKey);
         } else {
           const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
-          ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
+          if (regionIndex >= 0) {
+            ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
+          }
         }
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
