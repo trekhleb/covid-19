@@ -288,10 +288,7 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType,
     const labels = covidData.labels
       .slice(covidSchema.dateStartColumn)
       .map(formatDateLabel)
-      .filter(x=> {
-        // if(!startDate) { return x }
-        return startDate ? (new Date(x) >= new Date(startDate) && new Date(x) <= (endDate ? new Date(endDate) : new Date())) : x;
-      });
+      .filter( x => startDate ? (new Date(x) >= new Date(startDate) && new Date(x) <= (endDate ? new Date(endDate) : new Date())) : x);
     const datasets = [];
     regions.forEach((regionKey, regionIndex) => {
       selectedTypes.forEach(dataTypeKey => {
