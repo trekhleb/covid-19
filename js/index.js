@@ -26,6 +26,8 @@ function App() {
   const [useLogScale, setUseLogScale] = r.useState(defaultUseLogScale);
   const [countrySearchQuery, setCountrySearchQuery] = r.useState(defaultCountrySearchQuery);
   const [chartType, setChartType] = r.useState('line');
+  const [startDate, setStartDate] = r.useState('');
+  const [endDate, setEndDate] = r.useState('');
 
   const [dataSort, setDataSort] = r.useState(defaultDataSort);
   const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
@@ -145,11 +147,12 @@ function App() {
       e('div', {className: 'mb-1'},
         e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
-      e('div', { className: 'mb-1' },
-        e(ChartTypeDropDown, { setChartType })
+      e('div', { className: 'mb-1 d-flex justify-content-end flex-column align-items-end' },
+        e(ChartTypeDropDown, { setChartType }),
+        e(DateRangeSelector, { setStartDate, setEndDate })
       ),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, chartType})
+        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, chartType, startDate, endDate})
       ),
       e('div', {className: 'mb-0'},
         e(TableFilters, {
@@ -224,13 +227,47 @@ function ChartTypeDropDown({ setChartType }) {
   const dropdownValues = Object.values(chartTypes).map(chartType => {
     return e('a', { key: chartType, className: 'dropdown-item', value: chartType, onClick: onChange}, chartType)
   });
-  return e('div', { className: 'btn-group float-right dropleft' },
+  return e('div', { className: 'btn-group dropleft' },
     e('button', { 'data-toggle': "dropdown", className: 'btn btn-secondary btn-sm dropdown-toggle' }, currChartType),
     e('div', { className: 'dropdown-menu' }, dropdownValues)
     );
 }
 
-function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType}) {
+function DateRangeSelector({ setStartDate, setEndDate}) {
+  const [localStartDate, setLocalStartDate] = r.useState('');
+  const [localEndDate, setLocalEndDate] = r.useState('');
+  const onDateSelect = (value, isStartDate = true) => {
+    if (isStartDate) {
+      setLocalStartDate(value);
+      setStartDate(value);
+      return;
+    }
+    setLocalEndDate(value);
+    setEndDate(value);
+  }
+  return e('div', { className: 'date-container d-flex flex-row'}, 
+    e('div', { className: 'form-group pl-5' },
+      e('label', { className:'mb-0' }, 'Start Date'),
+      e('input', {
+        className: 'form-control',
+        type: 'date',
+        placeholder: 'Start Date',
+        onChange: (e) => onDateSelect(e.target.value),
+        value: localStartDate,
+      })
+    ),
+    e('div', { className: 'form-group pl-5'},
+      e('label', { className: 'mb-0'}, 'End Date'),
+      e('input', {
+        className: 'form-control',
+        type: 'date',
+        placeholder: 'End Date',
+        onChange: (e) => onDateSelect(e.target.value, false),
+        value: localEndDate,
+      })));
+}
+
+function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType, startDate, endDate}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
   const [screenWidth, screenHeight] = useWindowSize();
@@ -250,7 +287,11 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType}
     }
     const labels = covidData.labels
       .slice(covidSchema.dateStartColumn)
-      .map(formatDateLabel);
+      .map(formatDateLabel)
+      .filter(x=> {
+        // if(!startDate) { return x }
+        return startDate ? (new Date(x) >= new Date(startDate) && new Date(x) <= (endDate ? new Date(endDate) : new Date())) : x;
+      });
     const datasets = [];
     regions.forEach((regionKey, regionIndex) => {
       selectedTypes.forEach(dataTypeKey => {
@@ -287,7 +328,7 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType}
         aspectRatio,
       },
     });
-  }, [useLogScale, selectedTypes, regions, aspectRatio, chartType]);
+  }, [useLogScale, selectedTypes, regions, aspectRatio, chartType, startDate, endDate]);
   return e('canvas', {ref: canvasRef}, 'Your browser does not support the canvas element.');
 }
 
