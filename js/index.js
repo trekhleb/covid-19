@@ -25,6 +25,7 @@ function App() {
   const [selectedRegions, setSelectedRegions] = r.useState(defaultSelectedRegions);
   const [useLogScale, setUseLogScale] = r.useState(defaultUseLogScale);
   const [countrySearchQuery, setCountrySearchQuery] = r.useState(defaultCountrySearchQuery);
+  const [chartType, setChartType] = r.useState('line');
 
   const [dataSort, setDataSort] = r.useState(defaultDataSort);
   const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
@@ -144,8 +145,11 @@ function App() {
       e('div', {className: 'mb-1'},
         e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
+      e('div', { className: 'mb-1' },
+        e(ChartTypeDropDown, { setChartType })
+      ),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale})
+        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, chartType})
       ),
       e('div', {className: 'mb-0'},
         e(TableFilters, {
@@ -210,7 +214,23 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
-function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
+function ChartTypeDropDown({ setChartType }) {
+  const chartTypes = ['line', 'bar', 'radar'];
+  const [currChartType, setCurrChartType] = r.useState('Select Chart Type');
+  const onChange = (evt) => {
+    setCurrChartType(evt.target.text)
+    setChartType(evt.target.text)
+  }
+  const dropdownValues = Object.values(chartTypes).map(chartType => {
+    return e('a', { key: chartType, className: 'dropdown-item', value: chartType, onClick: onChange}, chartType)
+  });
+  return e('div', { className: 'btn-group float-right dropleft' },
+    e('button', { 'data-toggle': "dropdown", className: 'btn btn-secondary btn-sm dropdown-toggle' }, currChartType),
+    e('div', { className: 'dropdown-menu' }, dropdownValues)
+    );
+}
+
+function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
   const [screenWidth, screenHeight] = useWindowSize();
@@ -259,7 +279,7 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
     }
     const ctx = canvasRef.current.getContext('2d');
     chartRef.current = new Chart(ctx, {
-      type: 'line',
+      type: chartType,
       data: {labels, datasets},
       options: {
         responsive: true,
@@ -267,7 +287,7 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         aspectRatio,
       },
     });
-  }, [useLogScale, selectedTypes, regions, aspectRatio]);
+  }, [useLogScale, selectedTypes, regions, aspectRatio, chartType]);
   return e('canvas', {ref: canvasRef}, 'Your browser does not support the canvas element.');
 }
 
