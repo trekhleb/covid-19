@@ -268,7 +268,7 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
       },
     });
   }, [useLogScale, selectedTypes, regions, aspectRatio]);
-  return e('canvas', {ref: canvasRef});
+  return e('canvas', {ref: canvasRef}, 'Your browser does not support the canvas element.');
 }
 
 function TableFilters({
