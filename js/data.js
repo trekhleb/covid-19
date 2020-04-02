@@ -250,7 +250,7 @@ function getLastUpdatedDate(covidData) {
 
 function formatDateLabel(dateLabel) {
   const date = new Date(dateLabel);
-  const options = {year: 'numeric', month: 'short', day: '2-digit'};
+  const options = {month: 'short', day: '2-digit'};
   return date.toLocaleDateString('en-US', options);
 }
 
@@ -276,16 +276,6 @@ function groupCovidDataByCountries(covidData) {
       }, {}));
   });
   return covidDataByCountries;
-}
-
-function ticksToLogarithmicScale(ticks) {
-  return ticks.map((tick) => {
-    if (typeof tick === 'string' || tick <= 0) {
-      return tick;
-    }
-    const logTick = Math.log(tick);
-    return Math.round(logTick * 100) / 100;
-  });
 }
 
 function filterToUrl(filterKey, filterValue) {
