@@ -246,7 +246,7 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
-          data: useLogScale ? ticksToLogarithmicScale(ticks) : ticks,
+          data: ticks,
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
@@ -265,6 +265,10 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio,
+        scales: {
+          xAxes: [{display: true}],
+          yAxes: [{display: true, type: useLogScale ? 'logarithmic' : 'linear'}]
+        }
       },
     });
   }, [useLogScale, selectedTypes, regions, aspectRatio]);

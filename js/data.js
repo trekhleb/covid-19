@@ -278,16 +278,6 @@ function groupCovidDataByCountries(covidData) {
   return covidDataByCountries;
 }
 
-function ticksToLogarithmicScale(ticks) {
-  return ticks.map((tick) => {
-    if (typeof tick === 'string' || tick <= 0) {
-      return tick;
-    }
-    const logTick = Math.log(tick);
-    return Math.round(logTick * 100) / 100;
-  });
-}
-
 function filterToUrl(filterKey, filterValue) {
   try {
     const url = new URL(document.location);
