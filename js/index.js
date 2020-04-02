@@ -25,9 +25,8 @@ function App() {
   const [selectedRegions, setSelectedRegions] = r.useState(defaultSelectedRegions);
   const [useLogScale, setUseLogScale] = r.useState(defaultUseLogScale);
   const [countrySearchQuery, setCountrySearchQuery] = r.useState(defaultCountrySearchQuery);
-  const [chartType, setChartType] = r.useState('line');
-  const [startDate, setStartDate] = r.useState('');
-  const [endDate, setEndDate] = r.useState('');
+  const [startDate, setStartDate] = r.useState(null);
+  const [endDate, setEndDate] = r.useState(null);
 
   const [dataSort, setDataSort] = r.useState(defaultDataSort);
   const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
@@ -147,12 +146,9 @@ function App() {
       e('div', {className: 'mb-1'},
         e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
-      e('div', { className: 'mb-1 d-flex justify-content-end flex-column align-items-end' },
-        e(ChartTypeDropDown, { setChartType }),
-        e(DateRangeSelector, { setStartDate, setEndDate })
-      ),
+      e('div', null, e(DateRangeSelector, {setStartDate, setEndDate})),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, chartType, startDate, endDate})
+        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, startDate, endDate})
       ),
       e('div', {className: 'mb-0'},
         e(TableFilters, {
@@ -217,22 +213,6 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
-function ChartTypeDropDown({ setChartType }) {
-  const chartTypes = ['line', 'bar', 'radar'];
-  const [currChartType, setCurrChartType] = r.useState('Select Chart Type');
-  const onChange = (evt) => {
-    setCurrChartType(evt.target.text)
-    setChartType(evt.target.text)
-  }
-  const dropdownValues = Object.values(chartTypes).map(chartType => {
-    return e('a', { key: chartType, className: 'dropdown-item', value: chartType, onClick: onChange}, chartType)
-  });
-  return e('div', { className: 'btn-group dropleft' },
-    e('button', { 'data-toggle': "dropdown", className: 'btn btn-secondary btn-sm dropdown-toggle' }, currChartType),
-    e('div', { className: 'dropdown-menu' }, dropdownValues)
-    );
-}
-
 function DateRangeSelector({ setStartDate, setEndDate}) {
   const [localStartDate, setLocalStartDate] = r.useState('');
   const [localEndDate, setLocalEndDate] = r.useState('');
@@ -244,8 +224,8 @@ function DateRangeSelector({ setStartDate, setEndDate}) {
     }
     setLocalEndDate(value);
     setEndDate(value);
-  }
-  return e('div', { className: 'date-container d-flex flex-row'}, 
+  };
+  return e('div', { className: 'date-container d-flex flex-row'},
     e('div', { className: 'form-group pl-5' },
       e('label', { className:'mb-0' }, 'Start Date'),
       e('input', {
@@ -267,7 +247,7 @@ function DateRangeSelector({ setStartDate, setEndDate}) {
       })));
 }
 
-function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType, startDate, endDate}) {
+function CovidChart({ covidData, regions, selectedTypes, useLogScale, startDate, endDate}) {
   const canvasRef = r.useRef(null);
   const chartRef = r.useRef(null);
   const [screenWidth, screenHeight] = useWindowSize();
@@ -321,7 +301,7 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType,
     }
     const ctx = canvasRef.current.getContext('2d');
     chartRef.current = new Chart(ctx, {
-      type: chartType,
+      type: 'line',
       data: {labels, datasets},
       options: {
         responsive: true,
@@ -368,7 +348,7 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, chartType,
         },
       },
     });
-  }, [useLogScale, selectedTypes, regions, aspectRatio, chartType, startDate, endDate]);
+  }, [useLogScale, selectedTypes, regions, aspectRatio, startDate, endDate]);
   return e('canvas', {ref: canvasRef}, 'Your browser does not support the canvas element.');
 }
 
