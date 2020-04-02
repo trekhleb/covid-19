@@ -274,10 +274,12 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
             {
               id: linearYAxisID,
               type: 'linear',
+              display: 'auto',
             },
             {
               id: logYAxisID,
               type: 'logarithmic',
+              display: 'auto',
             },
           ],
         },
