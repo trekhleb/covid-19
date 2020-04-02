@@ -411,8 +411,9 @@ function RegionsTable({
       if (!countrySearchQuery) {
         return true;
       }
+      const escapedCountrySearchQuery = escapeRegExp(countrySearchQuery.trim());
       return region.key.search(
-        new RegExp(countrySearchQuery.trim(), 'i')
+        new RegExp(escapedCountrySearchQuery, 'i')
       ) >= 0;
     })
     .sort((regionA, regionB) => {
