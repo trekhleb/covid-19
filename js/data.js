@@ -250,7 +250,7 @@ function getLastUpdatedDate(covidData) {
 
 function formatDateLabel(dateLabel) {
   const date = new Date(dateLabel);
-  const options = {year: 'numeric', month: 'short', day: '2-digit'};
+  const options = {month: 'short', day: '2-digit'};
   return date.toLocaleDateString('en-US', options);
 }
 

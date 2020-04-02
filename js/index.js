@@ -275,11 +275,36 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
               id: linearYAxisID,
               type: 'linear',
               display: 'auto',
+              ticks: {
+                callback: (value, index, values) => {
+                  return value.toLocaleString();
+                }
+              }
             },
             {
               id: logYAxisID,
               type: 'logarithmic',
               display: 'auto',
+              ticks: {
+                callback: (value, index, values) => {
+                  const numbers = {
+                    '1000000000': '100B',
+                    '100000000': '100M',
+                    '10000000': '10M',
+                    '1000000': '1M',
+                    '100000': '100K',
+                    '10000': '10K',
+                    '1000': '1K',
+                    '100': '100',
+                    '10': '10',
+                    '0': '0',
+                  };
+                  if (numbers.hasOwnProperty(`${value}`)) {
+                    return numbers[`${value}`];
+                  }
+                  return null;
+                }
+              }
             },
           ],
         },
