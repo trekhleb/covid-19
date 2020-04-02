@@ -231,6 +231,9 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
     const labels = covidData.labels
       .slice(covidSchema.dateStartColumn)
       .map(formatDateLabel);
+    const linearYAxisID = 'linearYAxis';
+    const logYAxisID = 'logYAxis';
+    const yAxesID = useLogScale ? logYAxisID : linearYAxisID;
     const datasets = [];
     regions.forEach((regionKey, regionIndex) => {
       selectedTypes.forEach(dataTypeKey => {
@@ -250,6 +253,7 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
+          yAxisID: yAxesID,
         };
         datasets.push(dataset);
       });
@@ -265,6 +269,18 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio,
+        scales: {
+          yAxes: [
+            {
+              id: linearYAxisID,
+              type: 'linear',
+            },
+            {
+              id: logYAxisID,
+              type: 'logarithmic',
+            },
+          ],
+        },
       },
     });
   }, [useLogScale, selectedTypes, regions, aspectRatio]);
