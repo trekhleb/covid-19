@@ -138,7 +138,7 @@ function App() {
 
   return (
     e('div', null,
-      e('div', {className: 'mb-3'},
+      e('div', {className: 'mb-2'},
         e(LastUpdatedDate, {covidData})
       ),
       e('div', {className: 'mb-1'},
