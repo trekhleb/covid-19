@@ -8,37 +8,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function App() {
-  const defaultGroupByCountry = covidFilters.groupByCountry.defaultValue;
-  const defaultSelectedTypes = covidFilters.selectedTypes.defaultValue;
-  const defaultSelectedRegions = covidFilters.selectedRegions.defaultValue;
-  const defaultUseLogScale = covidFilters.useLogScale.defaultValue;
-  const defaultCountrySearchQuery = covidFilters.countrySearchQuery.defaultValue;
-  const defaultDataSort = covidFilters.dataSort.defaultValue;
-  const defaultDataSortDirection = covidFilters.dataSortDirection.defaultValue;
-
   const [covidData, setCovidData] = r.useState(null);
   const [covidDataByCountries, setCovidDataByCountries] = r.useState(null);
   const [errorMessage, setErrorMessage] = r.useState(null);
 
-  const [groupByCountry, setGroupByCountry] = r.useState(defaultGroupByCountry);
-  const [selectedTypes, setSelectedTypes] = r.useState(defaultSelectedTypes);
-  const [selectedRegions, setSelectedRegions] = r.useState(defaultSelectedRegions);
-  const [useLogScale, setUseLogScale] = r.useState(defaultUseLogScale);
-  const [countrySearchQuery, setCountrySearchQuery] = r.useState(defaultCountrySearchQuery);
-  const [startDate, setStartDate] = r.useState(null);
-  const [endDate, setEndDate] = r.useState(null);
+  const [groupByCountry, setGroupByCountry] = r.useState(covidFilters.groupByCountry.defaultValue);
+  const [selectedTypes, setSelectedTypes] = r.useState(covidFilters.selectedTypes.defaultValue);
+  const [selectedRegions, setSelectedRegions] = r.useState(covidFilters.selectedRegions.defaultValue);
+  const [useLogScale, setUseLogScale] = r.useState(covidFilters.useLogScale.defaultValue);
+  const [countrySearchQuery, setCountrySearchQuery] = r.useState(covidFilters.countrySearchQuery.defaultValue);
+  const [startDate, setStartDate] = r.useState(covidFilters.startDate.defaultValue);
+  const [endDate, setEndDate] = r.useState(covidFilters.endDate.defaultValue);
 
-  const [dataSort, setDataSort] = r.useState(defaultDataSort);
-  const [dataSortDirection, setDataSortDirection] = r.useState(defaultDataSortDirection);
+  const [dataSort, setDataSort] = r.useState(covidFilters.dataSort.defaultValue);
+  const [dataSortDirection, setDataSortDirection] = r.useState(covidFilters.dataSortDirection.defaultValue);
 
   const onFiltersReset = () => {
-    setGroupByCountry(defaultGroupByCountry);
-    setSelectedTypes(defaultSelectedTypes);
-    setSelectedRegions(defaultSelectedRegions);
-    setUseLogScale(defaultUseLogScale);
-    setCountrySearchQuery(defaultCountrySearchQuery);
-    setDataSort(defaultDataSort);
-    setDataSortDirection(defaultDataSortDirection);
+    setGroupByCountry(covidFilters.groupByCountry.defaultValue);
+    setSelectedTypes(covidFilters.selectedTypes.defaultValue);
+    setSelectedRegions(covidFilters.selectedRegions.defaultValue);
+    setUseLogScale(covidFilters.useLogScale.defaultValue);
+    setCountrySearchQuery(covidFilters.countrySearchQuery.defaultValue);
+    if (covidData) {
+      setStartDate(getCovidStartDate(covidData));
+      setEndDate(getCovidEndDate(covidData));
+    } else {
+      setStartDate(covidFilters.startDate.defaultValue);
+      setEndDate(covidFilters.endDate.defaultValue);
+    }
+
+    setDataSort(covidFilters.dataSort.defaultValue);
+    setDataSortDirection(covidFilters.dataSortDirection.defaultValue);
+
     deleteFiltersFromUrl();
   };
 
@@ -79,6 +80,14 @@ function App() {
     filterToUrl(covidFilters.selectedTypes.key, newSelectedTypes);
   };
 
+  const onStartDateChange = (date) => {
+    setStartDate(date);
+  };
+
+  const onEndDateChange = (date) => {
+    setEndDate(date);
+  };
+
   const onCountrySearch = (query) => {
     const q = query || '';
     setCountrySearchQuery(q);
@@ -86,10 +95,10 @@ function App() {
 
   const onGroupByCountries = () => {
     const newGroupByCountry = !groupByCountry;
-    setSelectedRegions(defaultSelectedRegions);
+    setSelectedRegions(covidFilters.selectedRegions.defaultValue);
     setGroupByCountry(newGroupByCountry);
     filterToUrl(covidFilters.groupByCountry.key, newGroupByCountry);
-    filterToUrl(covidFilters.selectedRegions.key, defaultSelectedRegions);
+    filterToUrl(covidFilters.selectedRegions.key, covidFilters.selectedRegions.defaultValue);
   };
 
   r.useEffect(() => {
@@ -97,6 +106,8 @@ function App() {
       .then((data) => {
         setCovidData(data);
         setCovidDataByCountries(groupCovidDataByCountries(data));
+        setStartDate(getCovidStartDate(data));
+        setEndDate(getCovidEndDate(data));
       })
       .catch(() => setErrorMessage('Cannot fetch the statistics data. It might be a network issue. Try to refresh the page.'));
   }, []);
@@ -140,16 +151,23 @@ function App() {
 
   return (
     e('div', null,
-      e('div', {className: 'mb-3'},
+      e('div', {className: 'mb-2'},
         e(LastUpdatedDate, {covidData})
       ),
       e('div', {className: 'mb-1'},
         e(DataTypes, {covidData: covidDataInUse, selectedRegions, selectedTypes, onTypeChange})
       ),
-      e('div', null, e(DateRangeSelector, {setStartDate, setEndDate})),
       e('div', {className: 'mb-4'},
-        e(CovidChart, {covidData: covidDataInUse, regions: selectedRegions, selectedTypes, useLogScale, startDate, endDate})
+        e(CovidChart, {
+          covidData: covidDataInUse,
+          regions: selectedRegions,
+          selectedTypes,
+          useLogScale,
+          startDate,
+          endDate,
+        })
       ),
+      e('div', null, e(DateRangeSelector, {covidData, startDate, endDate, onStartDateChange, onEndDateChange})),
       e('div', {className: 'mb-0'},
         e(TableFilters, {
           onFiltersReset,
@@ -213,38 +231,41 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   )
 }
 
-function DateRangeSelector({ setStartDate, setEndDate}) {
-  const [localStartDate, setLocalStartDate] = r.useState('');
-  const [localEndDate, setLocalEndDate] = r.useState('');
-  const onDateSelect = (value, isStartDate = true) => {
-    if (isStartDate) {
-      setLocalStartDate(value);
-      setStartDate(value);
-      return;
-    }
-    setLocalEndDate(value);
-    setEndDate(value);
-  };
-  return e('div', { className: 'date-container d-flex flex-row'},
-    e('div', { className: 'form-group pl-5' },
-      e('label', { className:'mb-0' }, 'Start Date'),
-      e('input', {
-        className: 'form-control',
-        type: 'date',
-        placeholder: 'Start Date',
-        onChange: (e) => onDateSelect(e.target.value),
-        value: localStartDate,
-      })
-    ),
-    e('div', { className: 'form-group pl-5'},
-      e('label', { className: 'mb-0'}, 'End Date'),
-      e('input', {
-        className: 'form-control',
-        type: 'date',
-        placeholder: 'End Date',
-        onChange: (e) => onDateSelect(e.target.value, false),
-        value: localEndDate,
-      })));
+function DateRangeSelector({covidData, startDate, endDate, onStartDateChange, onEndDateChange}) {
+  if (!covidData) {
+    return null;
+  }
+
+  return (
+    e('form', {className: 'form-inline'},
+      e('div', {className: 'input-group mb-2 mr-sm-3'},
+        e('label', {className: 'mr-sm-2'}, 'Start Date'),
+        e('input', {
+          className: 'form-control',
+          type: 'date',
+          placeholder: 'Start Date',
+          onChange: (e) => onStartDateChange(covidDateFromString(e.target.value)),
+          value: startDate ?  covidDateToString(startDate) : '',
+          min: covidDateToString(getCovidStartDate(covidData)),
+          max: covidDateToString(endDate),
+          required: true,
+        })
+      ),
+      e('div', {className: 'input-group mb-2 mr-sm-3'},
+        e('label', {className: 'mr-sm-2'}, 'End Date'),
+        e('input', {
+          className: 'form-control',
+          type: 'date',
+          placeholder: 'End Date',
+          onChange: (e) => onEndDateChange(covidDateFromString(e.target.value)),
+          value: endDate ? covidDateToString(endDate) : '',
+          min: covidDateToString(startDate),
+          max: covidDateToString(getCovidEndDate(covidData)),
+          required: true,
+        })
+      )
+    )
+  );
 }
 
 function CovidChart({ covidData, regions, selectedTypes, useLogScale, startDate, endDate}) {
@@ -267,8 +288,20 @@ function CovidChart({ covidData, regions, selectedTypes, useLogScale, startDate,
     }
     const labels = covidData.labels
       .slice(covidSchema.dateStartColumn)
-      .map(formatDateLabel)
-      .filter( x => startDate ? (new Date(x) >= new Date(startDate) && new Date(x) <= (endDate ? new Date(endDate) : new Date())) : x);
+      .filter((covidLabelString) => {
+        if (!startDate || !endDate) {
+          return true;
+        }
+        const labelDate = covidLabelToDate(covidLabelString);
+        if (
+          labelDate.getTime() >= startDate.getTime() &&
+          labelDate.getTime() <= endDate.getTime()
+        ) {
+          return true;
+        }
+        return false;
+      })
+      .map(formatDateLabel);
     const linearYAxisID = 'linearYAxis';
     const logYAxisID = 'logYAxis';
     const yAxesID = useLogScale ? logYAxisID : linearYAxisID;

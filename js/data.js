@@ -107,6 +107,14 @@ const covidFilters = {
     key: 'dataSortDirection',
     defaultValue: covidSortDirections.desc.key,
   },
+  startDate: {
+    key: 'startDate',
+    defaultValue: null,
+  },
+  endDate: {
+    key: 'endDate',
+    defaultValue: null,
+  },
 };
 
 function loadCovidData() {
@@ -326,4 +334,54 @@ function calculateMortality(confirmedNumber, deathsNumber) {
     return 0;
   }
   return Math.floor(1000 * mortality) / 10;
+}
+
+function getCovidStartDate(covidData) {
+  const startDateString = covidData.labels[covidSchema.dateStartColumn];
+  return covidLabelToDate(startDateString);
+}
+
+function getCovidEndDate(covidData) {
+  const endDateString = covidData.labels[covidData.labels.length - 1];
+  return covidLabelToDate(endDateString);
+}
+
+function covidLabelToDate(dateString) {
+  if (!dateString) {
+    return null;
+  }
+  const dateParts = dateString.split('/');
+  if (!dateParts || dateParts.length !== 3) {
+    return null;
+  }
+  const year = parseInt(`20${dateParts[2]}`, 10);
+  const month = parseInt(dateParts[0], 10) - 1;
+  const day = parseInt(dateParts[1], 10);
+  return new Date(year, month, day);
+}
+
+const covidDateSeparator = '-';
+
+function covidDateToString(date) {
+  if (!date) {
+    return '';
+  }
+  const monthNumber = date.getMonth() + 1;
+  const month = monthNumber < 10 ? `0${monthNumber}` : `${monthNumber}`;
+  const day = date.getDate() < 10 ? `0${date.getDate()}` : `${date.getDate()}`;
+  return `${date.getFullYear()}${covidDateSeparator}${month}${covidDateSeparator}${day}`;
+}
+
+function covidDateFromString(dateString) {
+  if (!dateString) {
+    return null;
+  }
+  const dateParts = dateString.split(covidDateSeparator);
+  if (!dateParts || dateParts.length !== 3) {
+    return null;
+  }
+  const year = parseInt(dateParts[0], 10);
+  const month = parseInt(dateParts[1], 10) - 1;
+  const day = parseInt(dateParts[2], 10);
+  return new Date(year, month, day);
 }
