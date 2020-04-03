@@ -243,13 +243,13 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         } else {
           const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
           if (regionIndex >= 0) {
-            ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
+            ticks = covidData.ticks[dataTypeKey][regionIndex];
           }
         }
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
-          data: ticks,
+          data: ticks.slice(covidSchema.dateStartColumn),
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
