@@ -38,6 +38,14 @@ const covidDataTypes = {
     alertClass: 'alert-danger',
     badgeClass: 'badge-danger',
   },
+  newconfirmed: {
+    key: 'newconfirmed',
+    title: 'New Confirmed',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
+    borderColor: confirmedPalette,
+    alertClass: 'alert-warning',
+    badgeClass: 'badge-warning',
+  },
 };
 
 const covidCountries = {
@@ -66,6 +74,10 @@ const covidSorts = {
   },
   mortality: {
     key: 'mortality',
+  },
+  newconfirmed: {
+    key: 'newconfirmed',
+    dataKey: covidDataTypes.newconfirmed.key,
   },
 };
 
@@ -127,6 +139,7 @@ function loadCovidData() {
           const dataType = Object.keys(covidDataTypes)[dataTypeIndex];
           const dataTypeTicks = Papa.parse(dataTypeTicksCSV).data;
           dataContainer.labels = dataTypeTicks.shift();
+      
           dataContainer.ticks[dataType] = dataTypeTicks
             .filter(regionTicks => {
               return regionTicks.length === dataContainer.labels.length;
@@ -152,6 +165,23 @@ function loadCovidData() {
               }
               return 0;
             });
+
+            if(dataType==='newconfirmed'){
+              // calculate yesterday minus today into a new array of ticks 
+              const newCasesDaily = dataContainer.ticks['newconfirmed'].map(function(dataRow){
+                  const Country = dataRow.shift();
+                  const Region = dataRow.shift();
+                  const WhateverThisis1 = dataRow.shift();
+                  const WhateverThisis2 = dataRow.shift();
+                  const newCases = dataRow.slice(1).map(function(n, i) { return n - dataRow[i]; }); 
+                  // recreate the rowsdata 
+                  newCases.unshift(Country,Region,WhateverThisis1,WhateverThisis2,0);
+                  return newCases;
+              });
+              //replace the old data with the new
+              dataContainer.ticks['newconfirmed'] = newCasesDaily;              
+              }
+
           return dataContainer;
         },
         defaultDataContainer
