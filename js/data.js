@@ -56,7 +56,7 @@ const covidDataTypes = {
   },
   dailymortality: {
     key: 'dailymortality',
-    title: 'Daily Mortality % ',
+    title: 'Mortality % ',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
