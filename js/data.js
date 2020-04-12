@@ -248,8 +248,10 @@ function getGlobalTicks(covidData, dataTypeKey) {
   
   const totalTicks = covidData.ticks[dataTypeKey][0].length;
   const globalTicks = new Array(totalTicks).fill(0);
-  // daily mortality is a percentage, a cumulitave sum would be nonsense. TODO: average 
-  if(dataTypeKey==='dailymortality') return globalTicks;
+  let mutxDoAverage = false;
+  let itemCount=0;
+  // go easy
+  if(dataTypeKey==='dailymortality') mutxDoAverage = true;
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
@@ -259,10 +261,13 @@ function getGlobalTicks(covidData, dataTypeKey) {
       if (tickIndex < covidSchema.dateStartColumn) {
         return;
       }
+      // count num items to average when dataType is dailymortality
+      (dataTypeKey==='dailymortality')&&itemCount++;
       globalTicks[tickIndex] += regionTick;
     });
   });
-  return globalTicks;
+  // return the average when dataType is dailymortality
+  return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/itemCount)*1000)/10):globalTicks;
 }
 
 function getTotalCount(covidData, dataTypeKey, regionKeys) {
