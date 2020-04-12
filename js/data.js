@@ -43,8 +43,8 @@ const covidDataTypes = {
     title: 'New Confirmed',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
     borderColor: confirmedPalette,
-    alertClass: 'alert-warning',
-    badgeClass: 'badge-warning',
+    alertClass: 'alert-info',
+    badgeClass: 'badge-info',
   },
 };
 
@@ -169,12 +169,13 @@ function loadCovidData() {
             if(dataType==='newconfirmed'){
               // calculate yesterday minus today into a new array of ticks 
               const newCasesDaily = dataContainer.ticks['newconfirmed'].map(function(dataRow){
+                  // shift off the index columns to allow the difference calculation
                   const Country = dataRow.shift();
                   const Region = dataRow.shift();
                   const WhateverThisis1 = dataRow.shift();
                   const WhateverThisis2 = dataRow.shift();
                   const newCases = dataRow.slice(1).map(function(n, i) { return n - dataRow[i]; }); 
-                  // recreate the rowsdata 
+                  // re-prefix the shifted columns 
                   newCases.unshift(Country,Region,WhateverThisis1,WhateverThisis2,0);
                   return newCases;
               });
