@@ -197,13 +197,16 @@ function DataType({covidData, selectedRegions, dataType, checked, onTypeChange})
   const onChange = () => {
     onTypeChange(dataType.key);
   };
+
+  const totalCountBadge = (dataType.key==="dailymortality")?undefined:e('span', {className: `badge ${badgeClass} ml-2`},totalCount.toLocaleString());
+  
   return (
     e('label', {className: `alert ${alertClass} mr-3 mb-3`},
       e('div', {className: 'form-group form-check mb-0'},
         e('input', {type: 'checkbox', className: 'form-check-input', checked, onChange}),
         e('div', {className: 'form-check-label'},
           dataType.title,
-          e('span', {className: `badge ${badgeClass} ml-2`}, totalCount.toLocaleString())
+          totalCountBadge          
         )
       )
     )

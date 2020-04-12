@@ -56,7 +56,7 @@ const covidDataTypes = {
   },
   dailymortality: {
     key: 'dailymortality',
-    title: 'Mortality %',
+    title: 'Daily Mortality % ',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
@@ -200,21 +200,17 @@ function loadCovidData() {
               dataContainer.ticks[dataType] = newCasesDaily;              
               }
 
-              if(dataType==="dailymortality"){
-                // calculateMortality(confirmedNumber, deathsNumber)
-                // dailymortality contains the array of deathNumber timeseries
-                const dailyMortality = dataContainer.ticks['dailymortality'].map(function(dataRow){
-                  
-                  // store the index columns to allow mapping the calculation 
+              if(dataType==="dailymortality"){              
+                // dailymortality dataType loads data from the deathNumber timeseries url
+                  const dailyMortality = dataContainer.ticks['dailymortality'].map(function(dataRow){
                   const deathsIndex = dataRow.slice(0,4);
                   const deathsDataTicks = dataRow.slice(4);
                   
                   // Refrence the confirmedNumber with the identical index
                   const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => arr[1]===deathsIndex[1]).slice(4);
-                  // const confirmedDataTicks = confirmedRow.slice(4);
-                                    
+
+                  // using => calculateMortality(confirmedNumber, deathsNumber)
                   const dailyMortality = deathsDataTicks.map((deathTickValue,i)=>calculateMortality(confirmedDataTicks[i],deathTickValue)); 
-                  // re-prefix the index columns
                   return deathsIndex.concat(dailyMortality);
               });
               dataContainer.ticks[dataType] = dailyMortality;
@@ -249,8 +245,11 @@ function getRegionByKey(covidData, dataTypeKey, regionKey) {
 }
 
 function getGlobalTicks(covidData, dataTypeKey) {
+  
   const totalTicks = covidData.ticks[dataTypeKey][0].length;
   const globalTicks = new Array(totalTicks).fill(0);
+  // daily mortality is a percentage, a cumulitave sum would be nonsense. TODO: average 
+  if(dataTypeKey==='dailymortality') return globalTicks;
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
