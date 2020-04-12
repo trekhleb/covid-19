@@ -37,7 +37,7 @@ const covidDataTypes = {
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
     badgeClass: 'badge-danger',
-  },
+  },  
   newconfirmed: {
     key: 'newconfirmed',
     title: 'New Confirmed',
@@ -45,6 +45,14 @@ const covidDataTypes = {
     borderColor: confirmedPalette,
     alertClass: 'alert-info',
     badgeClass: 'badge-info',
+  },
+  newdeaths: {
+    key: 'newdeaths',
+    title: 'New Deaths',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
+    borderColor: deathsPalette,
+    alertClass: 'alert-danger',
+    badgeClass: 'badge-danger',
   },
 };
 
@@ -69,6 +77,10 @@ const covidSorts = {
     dataKey: covidDataTypes.recovered.key,
   },
   deaths: {
+    key: 'deaths',
+    dataKey: covidDataTypes.deaths.key,
+  },
+  newdeaths: {
     key: 'deaths',
     dataKey: covidDataTypes.deaths.key,
   },
@@ -166,9 +178,9 @@ function loadCovidData() {
               return 0;
             });
 
-            if(dataType==='newconfirmed'){
+            if(dataType==='newconfirmed'||dataType==='newdeaths'){
               // calculate yesterday minus today into a new array of ticks 
-              const newCasesDaily = dataContainer.ticks['newconfirmed'].map(function(dataRow){
+              const newCasesDaily = dataContainer.ticks[dataType].map(function(dataRow){
                   // shift off the index columns to allow the difference calculation
                   const Country = dataRow.shift();
                   const Region = dataRow.shift();
@@ -180,7 +192,7 @@ function loadCovidData() {
                   return newCases;
               });
               //replace the old data with the new
-              dataContainer.ticks['newconfirmed'] = newCasesDaily;              
+              dataContainer.ticks[dataType] = newCasesDaily;              
               }
 
           return dataContainer;
