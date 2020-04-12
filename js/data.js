@@ -56,7 +56,7 @@ const covidDataTypes = {
   },
   dailymortality: {
     key: 'dailymortality',
-    title: 'Daily Mortality % ',
+    title: 'Mortality % ',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
@@ -207,8 +207,8 @@ function loadCovidData() {
                   const deathsDataTicks = dataRow.slice(4);
                   
                   // Refrence the confirmedNumber with the identical index
-                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => arr[1]===deathsIndex[1]).slice(4);
-
+                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => (arrayEqual(arr.slice(0,4))(deathsIndex.slice(0,4)))).slice(4);
+                    
                   // using => calculateMortality(confirmedNumber, deathsNumber)
                   const dailyMortality = deathsDataTicks.map((deathTickValue,i)=>calculateMortality(confirmedDataTicks[i],deathTickValue)); 
                   return deathsIndex.concat(dailyMortality);
@@ -223,6 +223,19 @@ function loadCovidData() {
       );
     });
 }
+
+const arrayCompare = f => ([x,...xs]) => ([y,...ys]) =>
+  x === undefined && y === undefined
+    ? true
+    : Boolean (f (x) (y)) && arrayCompare (f) (xs) (ys)
+
+// equal :: a -> a -> Bool
+const equal = x => y =>
+  x === y // notice: triple equal
+
+// arrayEqual :: [a] -> [a] -> Bool
+const arrayEqual =
+  arrayCompare (equal)
 
 function getRegionKey(regionTicks) {
   if (!regionTicks || !regionTicks.length) {
@@ -248,8 +261,10 @@ function getGlobalTicks(covidData, dataTypeKey) {
   
   const totalTicks = covidData.ticks[dataTypeKey][0].length;
   const globalTicks = new Array(totalTicks).fill(0);
-  // daily mortality is a percentage, a cumulitave sum would be nonsense. TODO: average 
-  if(dataTypeKey==='dailymortality') return globalTicks;
+  let mutxDoAverage = false;
+  let itemCount=0;
+  // go easy
+  
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
@@ -259,10 +274,14 @@ function getGlobalTicks(covidData, dataTypeKey) {
       if (tickIndex < covidSchema.dateStartColumn) {
         return;
       }
+      // count num items to average when dataType is dailymortality
+      (dataTypeKey==='dailymortality')&&itemCount++;
       globalTicks[tickIndex] += regionTick;
     });
   });
-  return globalTicks;
+  // return the average when dataType is dailymortality
+  return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/globalTicks.length)*1000)/10):globalTicks;
+  // return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/itemCount)*1000)/10):globalTicks;
 }
 
 function getTotalCount(covidData, dataTypeKey, regionKeys) {
