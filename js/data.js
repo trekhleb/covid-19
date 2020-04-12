@@ -81,8 +81,8 @@ const covidSorts = {
     dataKey: covidDataTypes.deaths.key,
   },
   newdeaths: {
-    key: 'deaths',
-    dataKey: covidDataTypes.deaths.key,
+    key: 'newdeaths',
+    dataKey: covidDataTypes.newdeaths.key,
   },
   mortality: {
     key: 'mortality',
@@ -178,20 +178,17 @@ function loadCovidData() {
               return 0;
             });
 
-            if(dataType==='newconfirmed'||dataType==='newdeaths'){
-              // calculate yesterday minus today into a new array of ticks 
+            if(dataType==='newconfirmed'||dataType==='newdeaths'){            
               const newCasesDaily = dataContainer.ticks[dataType].map(function(dataRow){
-                  // shift off the index columns to allow the difference calculation
-                  const Country = dataRow.shift();
-                  const Region = dataRow.shift();
-                  const WhateverThisis1 = dataRow.shift();
-                  const WhateverThisis2 = dataRow.shift();
-                  const newCases = dataRow.slice(1).map(function(n, i) { return n - dataRow[i]; }); 
-                  // re-prefix the shifted columns 
-                  newCases.unshift(Country,Region,WhateverThisis1,WhateverThisis2,0);
-                  return newCases;
+                  // store the index columns to allow the difference calculation
+                  const index = dataRow.slice(0,4);
+                  const dataTicks = dataRow.slice(4);
+                  // calculate yesterday minus today into a new array of ticks 
+                  const newCases = dataTicks.slice(1).map(function(n, i) { return n - dataTicks[i]; }); 
+                  // re-prefix the index columns
+                  return index.concat(newCases);
               });
-              //replace the old data with the new
+              //replace the cumulative ticks with with the daily new cases 
               dataContainer.ticks[dataType] = newCasesDaily;              
               }
 
