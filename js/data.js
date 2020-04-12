@@ -54,6 +54,14 @@ const covidDataTypes = {
     alertClass: 'alert-danger',
     badgeClass: 'badge-danger',
   },
+  dailymortality: {
+    key: 'dailymortality',
+    title: 'Mortality %',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
+    borderColor: deathsPalette,
+    alertClass: 'alert-danger',
+    badgeClass: 'badge-danger',
+  },
 };
 
 const covidCountries = {
@@ -180,7 +188,7 @@ function loadCovidData() {
 
             if(dataType==='newconfirmed'||dataType==='newdeaths'){            
               const newCasesDaily = dataContainer.ticks[dataType].map(function(dataRow){
-                  // store the index columns to allow the difference calculation
+                  // store the index columns to allow mapping of the difference calculation
                   const index = dataRow.slice(0,4);
                   const dataTicks = dataRow.slice(4);
                   // calculate yesterday minus today into a new array of ticks 
@@ -190,6 +198,27 @@ function loadCovidData() {
               });
               //replace the cumulative ticks with with the daily new cases 
               dataContainer.ticks[dataType] = newCasesDaily;              
+              }
+
+              if(dataType==="dailymortality"){
+                // calculateMortality(confirmedNumber, deathsNumber)
+                // dailymortality contains the array of deathNumber timeseries
+                const dailyMortality = dataContainer.ticks['dailymortality'].map(function(dataRow){
+                  
+                  // store the index columns to allow mapping the calculation 
+                  const deathsIndex = dataRow.slice(0,4);
+                  const deathsDataTicks = dataRow.slice(4);
+                  
+                  // Refrence the confirmedNumber with the identical index
+                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => arr[1]===deathsIndex[1]).slice(4);
+                  // const confirmedDataTicks = confirmedRow.slice(4);
+                                    
+                  const dailyMortality = deathsDataTicks.map((deathTickValue,i)=>calculateMortality(confirmedDataTicks[i],deathTickValue)); 
+                  // re-prefix the index columns
+                  return deathsIndex.concat(dailyMortality);
+              });
+              dataContainer.ticks[dataType] = dailyMortality;
+                
               }
 
           return dataContainer;
