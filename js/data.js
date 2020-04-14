@@ -207,8 +207,8 @@ function loadCovidData() {
                   const deathsDataTicks = dataRow.slice(4);
                   
                   // Refrence the confirmedNumber with the identical index
-                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => arr[1]===deathsIndex[1]).slice(4);
-
+                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => (arrayEqual(arr.slice(0,4))(deathsIndex.slice(0,4)))).slice(4);
+                    
                   // using => calculateMortality(confirmedNumber, deathsNumber)
                   const dailyMortality = deathsDataTicks.map((deathTickValue,i)=>calculateMortality(confirmedDataTicks[i],deathTickValue)); 
                   return deathsIndex.concat(dailyMortality);
@@ -223,6 +223,19 @@ function loadCovidData() {
       );
     });
 }
+
+const arrayCompare = f => ([x,...xs]) => ([y,...ys]) =>
+  x === undefined && y === undefined
+    ? true
+    : Boolean (f (x) (y)) && arrayCompare (f) (xs) (ys)
+
+// equal :: a -> a -> Bool
+const equal = x => y =>
+  x === y // notice: triple equal
+
+// arrayEqual :: [a] -> [a] -> Bool
+const arrayEqual =
+  arrayCompare (equal)
 
 function getRegionKey(regionTicks) {
   if (!regionTicks || !regionTicks.length) {
@@ -251,7 +264,7 @@ function getGlobalTicks(covidData, dataTypeKey) {
   let mutxDoAverage = false;
   let itemCount=0;
   // go easy
-  if(dataTypeKey==='dailymortality') mutxDoAverage = true;
+  
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
@@ -267,7 +280,8 @@ function getGlobalTicks(covidData, dataTypeKey) {
     });
   });
   // return the average when dataType is dailymortality
-  return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/itemCount)*1000)/10):globalTicks;
+  return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/globalTicks.length)*1000)/10):globalTicks;
+  // return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/itemCount)*1000)/10):globalTicks;
 }
 
 function getTotalCount(covidData, dataTypeKey, regionKeys) {
