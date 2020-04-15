@@ -360,21 +360,32 @@ function groupCovidDataByCountries(covidData) {
           countriesTicksMap[countryName][covidSchema.stateColumn] = '';
           return countriesTicksMap;
         }
-      
-
-      
           for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
             countriesTicksMap[countryName][columnIndex] += regionTicks[columnIndex];
           }
-        //TODO:if covid data type is dailymortality average the averages calculated earlier for each region by dividing by num regions just summed 
-        if(covidDataType.key==='dailymortality'){
-          // for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
-            countriesTicksMap[countryName][columnIndex] = countriesTicksMap[countryName][columnIndex]/regionTicks.length;
-          // }
-        }
-
         return countriesTicksMap;
-      }, {}));
+       
+      }, {})
+    );
+      
+   
+        //if covid data type is dailymortality average the averages calculated earlier for each region by dividing by num regions just summed 
+        if(covidDataType.key==='dailymortality'){
+          //map each covidDataByCountries country 
+          covidDataByCountries.ticks[covidDataType.key] = covidDataByCountries.ticks[covidDataType.key].map(countryTicksMap => {
+            const countryName = countryTicksMap[covidSchema.countryColumn];
+            //get the number of regions from the Country name and the covidData with regions 
+            const numRegions = covidData.ticks[covidDataType.key].filter(countryData => {return countryData[covidSchema.countryColumn]===countryName}).length
+            const dailymortalityIndex = countryTicksMap.slice(0,4);
+            const dailymortalityDataTicks = countryTicksMap.slice(4);
+            return dailymortalityIndex.concat(dailymortalityDataTicks.map(dayData => {return dayData / numRegions}));
+          }) 
+         
+     
+        }
+        
+      
+      
 
   });
   return covidDataByCountries;
