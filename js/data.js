@@ -347,20 +347,35 @@ function groupCovidDataByCountries(covidData) {
     ticks: {},
   };
   covidDataByCountries.labels = [...covidData.labels];
+  
   Object.values(covidDataTypes).forEach((covidDataType) => {
+    
     covidDataByCountries.ticks[covidDataType.key] = Object.values(covidData.ticks[covidDataType.key]
       .reduce((countriesTicksMap, regionTicks) => {
+
         const countryName = regionTicks[covidSchema.countryColumn];
+        
         if (!countriesTicksMap[countryName]) {
           countriesTicksMap[countryName] = [...regionTicks];
           countriesTicksMap[countryName][covidSchema.stateColumn] = '';
           return countriesTicksMap;
         }
-        for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
-          countriesTicksMap[countryName][columnIndex] += regionTicks[columnIndex];
+      
+
+      
+          for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
+            countriesTicksMap[countryName][columnIndex] += regionTicks[columnIndex];
+          }
+        //TODO:if covid data type is dailymortality average the averages calculated earlier for each region by dividing by num regions just summed 
+        if(covidDataType.key==='dailymortality'){
+          // for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
+            countriesTicksMap[countryName][columnIndex] = countriesTicksMap[countryName][columnIndex]/regionTicks.length;
+          // }
         }
+
         return countriesTicksMap;
       }, {}));
+
   });
   return covidDataByCountries;
 }
