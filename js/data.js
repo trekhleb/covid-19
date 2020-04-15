@@ -40,7 +40,7 @@ const covidDataTypes = {
   },  
   newconfirmed: {
     key: 'newconfirmed',
-    title: 'New Confirmed',
+    title: 'Confirmed qd',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
     borderColor: confirmedPalette,
     alertClass: 'alert-info',
@@ -48,7 +48,7 @@ const covidDataTypes = {
   },
   newdeaths: {
     key: 'newdeaths',
-    title: 'New Deaths',
+    title: 'Deaths qd',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
@@ -56,7 +56,7 @@ const covidDataTypes = {
   },
   dailymortality: {
     key: 'dailymortality',
-    title: 'Mortality % ',
+    title: 'Mortality % qd',
     dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
@@ -274,14 +274,13 @@ function getGlobalTicks(covidData, dataTypeKey) {
       if (tickIndex < covidSchema.dateStartColumn) {
         return;
       }
-      // count num items to average when dataType is dailymortality
-      (dataTypeKey==='dailymortality')&&itemCount++;
-      globalTicks[tickIndex] += regionTick;
+       globalTicks[tickIndex] += regionTick;
     });
   });
+
   // return the average when dataType is dailymortality
-  return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/globalTicks.length)*1000)/10):globalTicks;
-  // return (dataTypeKey==='dailymortality')?globalTicks.map(i => Math.floor((i/itemCount)*1000)/10):globalTicks;
+  return (dataTypeKey==='dailymortality')?globalTicks.map(i => {return i/covidData.ticks.dailymortality.length}):globalTicks;
+  
 }
 
 function getTotalCount(covidData, dataTypeKey, regionKeys) {
@@ -366,8 +365,7 @@ function groupCovidDataByCountries(covidData) {
         return countriesTicksMap;
        
       }, {})
-    );
-      
+    );      
    
         //if covid data type is dailymortality average the averages calculated earlier for each region by dividing by num regions just summed 
         if(covidDataType.key==='dailymortality'){
