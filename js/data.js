@@ -54,14 +54,14 @@ const covidDataTypes = {
     alertClass: 'alert-danger',
     badgeClass: 'badge-danger',
   },
-  dailymortality: {
-    key: 'dailymortality',
-    title: 'Mortality % qd',
-    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
-    borderColor: deathsPalette,
-    alertClass: 'alert-danger',
-    badgeClass: 'badge-danger',
-  },
+  // dailymortality: {
+  //   key: 'dailymortality',
+  //   title: 'Mortality % qd',
+  //   dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
+  //   borderColor: deathsPalette,
+  //   alertClass: 'alert-danger',
+  //   badgeClass: 'badge-danger',
+  // },
 };
 
 const covidCountries = {
