@@ -399,9 +399,9 @@ function RegionsTable({
           covidDataTypes.deaths.title,
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
         ),
-        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.mortality.key)},
-          'Mortality',
-          e(ColumnSorter, {sortDirection: dataSort === covidSorts.mortality.key ? dataSortDirection : null})
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.lethality.key)},
+          'Lethality',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.lethality.key ? dataSortDirection : null})
         ),
       ),
     )
@@ -424,12 +424,12 @@ function RegionsTable({
           sortCriteriaA = regionA.key;
           sortCriteriaB = regionB.key;
           break;
-        case covidSorts.mortality.key:
-          sortCriteriaA = calculateMortality(
+        case covidSorts.lethality.key:
+          sortCriteriaA = calculateLethality(
             regionA.numbers[covidDataTypes.confirmed.key],
             regionA.numbers[covidDataTypes.deaths.key]
           );
-          sortCriteriaB = calculateMortality(
+          sortCriteriaB = calculateLethality(
             regionB.numbers[covidDataTypes.confirmed.key],
             regionB.numbers[covidDataTypes.deaths.key]
           );
@@ -452,11 +452,11 @@ function RegionsTable({
       const recoveredNumber = region.numbers[covidDataTypes.recovered.key] >= 0 ? region.numbers[covidDataTypes.recovered.key] : '';
       const deathsNumber = region.numbers[covidDataTypes.deaths.key] >= 0 ? region.numbers[covidDataTypes.deaths.key] : '';
 
-      const mortality = calculateMortality(
+      const lethality = calculateLethality(
         region.numbers[covidDataTypes.confirmed.key],
         region.numbers[covidDataTypes.deaths.key]
       );
-      let mortalityNumber = `${mortality}%`;
+      let lethalityNumber = `${lethality}%`;
 
       return (
         e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
@@ -466,7 +466,7 @@ function RegionsTable({
           e('td', null, confirmedNumber),
           e('td', null, recoveredNumber),
           e('td', null, deathsNumber),
-          e('td', null, e('small', {className: 'text-muted'}, mortalityNumber)),
+          e('td', null, e('small', {className: 'text-muted'}, lethalityNumber)),
         )
       );
     });
