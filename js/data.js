@@ -92,8 +92,8 @@ const covidSorts = {
     key: 'newdeaths',
     dataKey: covidDataTypes.newdeaths.key,
   },
-  mortality: {
-    key: 'mortality',
+  lethality: {
+    key: 'lethality',
   },
   newconfirmed: {
     key: 'newconfirmed',
@@ -428,13 +428,13 @@ function deleteFiltersFromUrl() {
   }
 }
 
-function calculateMortality(confirmedNumber, deathsNumber) {
+function calculateLethality(confirmedNumber, deathsNumber) {
   if (confirmedNumber === 0) {
     return 0;
   }
-  const mortality = deathsNumber / confirmedNumber;
-  if (mortality < 0) {
+  const lethality = deathsNumber / confirmedNumber;
+  if (lethality < 0) {
     return 0;
   }
-  return Math.floor(1000 * mortality) / 10;
+  return Math.floor(1000 * lethality) / 10;
 }

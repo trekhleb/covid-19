@@ -138,7 +138,7 @@ function App() {
 
   return (
     e('div', null,
-      e('div', {className: 'mb-3'},
+      e('div', {className: 'mb-2'},
         e(LastUpdatedDate, {covidData})
       ),
       e('div', {className: 'mb-1'},
@@ -246,13 +246,13 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
         } else {
           const regionIndex = getRegionIndexByKey(covidData, dataTypeKey, regionKey);
           if (regionIndex >= 0) {
-            ticks = covidData.ticks[dataTypeKey][regionIndex].slice(covidSchema.dateStartColumn);
+            ticks = covidData.ticks[dataTypeKey][regionIndex];
           }
         }
         const paletteDepth = covidDataTypes[dataTypeKey].borderColor.length;
         const dataset = {
           label: `${covidDataTypes[dataTypeKey].title} (${regionKey})`,
-          data: ticks,
+          data: ticks.slice(covidSchema.dateStartColumn),
           borderWidth: 1,
           borderColor: covidDataTypes[dataTypeKey].borderColor[regionIndex % paletteDepth],
           fill: false,
@@ -289,24 +289,24 @@ function CovidChart({covidData, regions, selectedTypes, useLogScale}) {
               type: 'logarithmic',
               display: 'auto',
               ticks: {
-                callback: (value, index, values) => {
-                  const numbers = {
-                    '1000000000': '100B',
-                    '100000000': '100M',
-                    '10000000': '10M',
-                    '1000000': '1M',
-                    '100000': '100K',
-                    '10000': '10K',
-                    '1000': '1K',
-                    '100': '100',
-                    '10': '10',
-                    '0': '0',
-                  };
-                  if (numbers.hasOwnProperty(`${value}`)) {
-                    return numbers[`${value}`];
-                  }
-                  return null;
-                }
+                // callback: (value, index, values) => {
+                //   const numbers = {
+                //     '1000000000': '100B',
+                //     '100000000': '100M',
+                //     '10000000': '10M',
+                //     '1000000': '1M',
+                //     '100000': '100K',
+                //     '10000': '10K',
+                //     '1000': '1K',
+                //     '100': '100',
+                //     '10': '10',
+                //     '0': '0',
+                //   };
+                //   if (numbers.hasOwnProperty(`${value}`)) {
+                //     return numbers[`${value}`];
+                //   }
+                //   return null;
+                // }
               }
             },
           ],
@@ -402,9 +402,9 @@ function RegionsTable({
           covidDataTypes.deaths.title,
           e(ColumnSorter, {sortDirection: dataSort === covidSorts.deaths.key ? dataSortDirection : null})
         ),
-        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.mortality.key)},
-          'Mortality',
-          e(ColumnSorter, {sortDirection: dataSort === covidSorts.mortality.key ? dataSortDirection : null})
+        e('th', {sortable: 'sortable', onClick: () => onColumnSort(covidSorts.lethality.key)},
+          'Lethality',
+          e(ColumnSorter, {sortDirection: dataSort === covidSorts.lethality.key ? dataSortDirection : null})
         ),
       ),
     )
@@ -427,12 +427,12 @@ function RegionsTable({
           sortCriteriaA = regionA.key;
           sortCriteriaB = regionB.key;
           break;
-        case covidSorts.mortality.key:
-          sortCriteriaA = calculateMortality(
+        case covidSorts.lethality.key:
+          sortCriteriaA = calculateLethality(
             regionA.numbers[covidDataTypes.confirmed.key],
             regionA.numbers[covidDataTypes.deaths.key]
           );
-          sortCriteriaB = calculateMortality(
+          sortCriteriaB = calculateLethality(
             regionB.numbers[covidDataTypes.confirmed.key],
             regionB.numbers[covidDataTypes.deaths.key]
           );
@@ -455,11 +455,11 @@ function RegionsTable({
       const recoveredNumber = region.numbers[covidDataTypes.recovered.key] >= 0 ? region.numbers[covidDataTypes.recovered.key] : '';
       const deathsNumber = region.numbers[covidDataTypes.deaths.key] >= 0 ? region.numbers[covidDataTypes.deaths.key] : '';
 
-      const mortality = calculateMortality(
+      const lethality = calculateLethality(
         region.numbers[covidDataTypes.confirmed.key],
         region.numbers[covidDataTypes.deaths.key]
       );
-      let mortalityNumber = `${mortality}%`;
+      let lethalityNumber = `${lethality}%`;
 
       return (
         e('tr', {key: region.key, onClick: () => onRegionChange(region.key)},
@@ -469,7 +469,7 @@ function RegionsTable({
           e('td', null, confirmedNumber),
           e('td', null, recoveredNumber),
           e('td', null, deathsNumber),
-          e('td', null, e('small', {className: 'text-muted'}, mortalityNumber)),
+          e('td', null, e('small', {className: 'text-muted'}, lethalityNumber)),
         )
       );
     });
