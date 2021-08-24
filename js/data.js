@@ -37,7 +37,31 @@ const covidDataTypes = {
     borderColor: deathsPalette,
     alertClass: 'alert-danger',
     badgeClass: 'badge-danger',
+  },  
+  newconfirmed: {
+    key: 'newconfirmed',
+    title: 'Confirmed qd',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_confirmed_global.csv`,
+    borderColor: confirmedPalette,
+    alertClass: 'alert-info',
+    badgeClass: 'badge-info',
   },
+  newdeaths: {
+    key: 'newdeaths',
+    title: 'Deaths qd',
+    dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
+    borderColor: deathsPalette,
+    alertClass: 'alert-danger',
+    badgeClass: 'badge-danger',
+  },
+  // dailymortality: {
+  //   key: 'dailymortality',
+  //   title: 'Mortality % qd',
+  //   dataSourceUrl: `${covidDataBaseURL}/time_series_covid19_deaths_global.csv`,
+  //   borderColor: deathsPalette,
+  //   alertClass: 'alert-danger',
+  //   badgeClass: 'badge-danger',
+  // },
 };
 
 const covidCountries = {
@@ -64,8 +88,16 @@ const covidSorts = {
     key: 'deaths',
     dataKey: covidDataTypes.deaths.key,
   },
+  newdeaths: {
+    key: 'newdeaths',
+    dataKey: covidDataTypes.newdeaths.key,
+  },
   lethality: {
     key: 'lethality',
+  },
+  newconfirmed: {
+    key: 'newconfirmed',
+    dataKey: covidDataTypes.newconfirmed.key,
   },
 };
 
@@ -127,6 +159,7 @@ function loadCovidData() {
           const dataType = Object.keys(covidDataTypes)[dataTypeIndex];
           const dataTypeTicks = Papa.parse(dataTypeTicksCSV).data;
           dataContainer.labels = dataTypeTicks.shift();
+      
           dataContainer.ticks[dataType] = dataTypeTicks
             .filter(regionTicks => {
               return regionTicks.length === dataContainer.labels.length;
@@ -152,12 +185,57 @@ function loadCovidData() {
               }
               return 0;
             });
+
+            if(dataType==='newconfirmed'||dataType==='newdeaths'){            
+              const newCasesDaily = dataContainer.ticks[dataType].map(function(dataRow){
+                  // store the index columns to allow mapping of the difference calculation
+                  const index = dataRow.slice(0,4);
+                  const dataTicks = dataRow.slice(4);
+                  // calculate yesterday minus today into a new array of ticks 
+                  const newCases = dataTicks.slice(1).map(function(n, i) { return n - dataTicks[i]; }); 
+                  // re-prefix the index columns
+                  return index.concat(newCases);
+              });
+              //replace the cumulative ticks with with the daily new cases 
+              dataContainer.ticks[dataType] = newCasesDaily;              
+              }
+
+              if(dataType==="dailymortality"){              
+                // dailymortality dataType loads data from the deathNumber timeseries url
+                  const dailyMortality = dataContainer.ticks['dailymortality'].map(function(dataRow){
+                  const deathsIndex = dataRow.slice(0,4);
+                  const deathsDataTicks = dataRow.slice(4);
+                  
+                  // Refrence the confirmedNumber with the identical index
+                  const confirmedDataTicks =  dataContainer.ticks['confirmed'].find((arr) => (arrayEqual(arr.slice(0,4))(deathsIndex.slice(0,4)))).slice(4);
+                    
+                  // using => calculateMortality(confirmedNumber, deathsNumber)
+                  const dailyMortality = deathsDataTicks.map((deathTickValue,i)=>calculateMortality(confirmedDataTicks[i],deathTickValue)); 
+                  return deathsIndex.concat(dailyMortality);
+              });
+              dataContainer.ticks[dataType] = dailyMortality;
+                
+              }
+
           return dataContainer;
         },
         defaultDataContainer
       );
     });
 }
+
+const arrayCompare = f => ([x,...xs]) => ([y,...ys]) =>
+  x === undefined && y === undefined
+    ? true
+    : Boolean (f (x) (y)) && arrayCompare (f) (xs) (ys)
+
+// equal :: a -> a -> Bool
+const equal = x => y =>
+  x === y // notice: triple equal
+
+// arrayEqual :: [a] -> [a] -> Bool
+const arrayEqual =
+  arrayCompare (equal)
 
 function getRegionKey(regionTicks) {
   if (!regionTicks || !regionTicks.length) {
@@ -180,8 +258,13 @@ function getRegionByKey(covidData, dataTypeKey, regionKey) {
 }
 
 function getGlobalTicks(covidData, dataTypeKey) {
+  
   const totalTicks = covidData.ticks[dataTypeKey][0].length;
   const globalTicks = new Array(totalTicks).fill(0);
+  let mutxDoAverage = false;
+  let itemCount=0;
+  // go easy
+  
   globalTicks[covidSchema.stateColumn] = '';
   globalTicks[covidSchema.countryColumn] = covidCountries.all.title;
   globalTicks[covidSchema.latColumn] = '';
@@ -191,10 +274,13 @@ function getGlobalTicks(covidData, dataTypeKey) {
       if (tickIndex < covidSchema.dateStartColumn) {
         return;
       }
-      globalTicks[tickIndex] += regionTick;
+       globalTicks[tickIndex] += regionTick;
     });
   });
-  return globalTicks;
+
+  // return the average when dataType is dailymortality
+  return (dataTypeKey==='dailymortality')?globalTicks.map(i => {return i/covidData.ticks.dailymortality.length}):globalTicks;
+  
 }
 
 function getTotalCount(covidData, dataTypeKey, regionKeys) {
@@ -260,20 +346,45 @@ function groupCovidDataByCountries(covidData) {
     ticks: {},
   };
   covidDataByCountries.labels = [...covidData.labels];
+  
   Object.values(covidDataTypes).forEach((covidDataType) => {
+    
     covidDataByCountries.ticks[covidDataType.key] = Object.values(covidData.ticks[covidDataType.key]
       .reduce((countriesTicksMap, regionTicks) => {
+
         const countryName = regionTicks[covidSchema.countryColumn];
+        
         if (!countriesTicksMap[countryName]) {
           countriesTicksMap[countryName] = [...regionTicks];
           countriesTicksMap[countryName][covidSchema.stateColumn] = '';
           return countriesTicksMap;
         }
-        for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
-          countriesTicksMap[countryName][columnIndex] += regionTicks[columnIndex];
-        }
+          for (let columnIndex = covidSchema.dateStartColumn; columnIndex < regionTicks.length; columnIndex += 1) {
+            countriesTicksMap[countryName][columnIndex] += regionTicks[columnIndex];
+          }
         return countriesTicksMap;
-      }, {}));
+       
+      }, {})
+    );      
+   
+        //if covid data type is dailymortality average the averages calculated earlier for each region by dividing by num regions just summed 
+        if(covidDataType.key==='dailymortality'){
+          //map each covidDataByCountries country 
+          covidDataByCountries.ticks[covidDataType.key] = covidDataByCountries.ticks[covidDataType.key].map(countryTicksMap => {
+            const countryName = countryTicksMap[covidSchema.countryColumn];
+            //get the number of regions from the Country name and the covidData with regions 
+            const numRegions = covidData.ticks[covidDataType.key].filter(countryData => {return countryData[covidSchema.countryColumn]===countryName}).length
+            const dailymortalityIndex = countryTicksMap.slice(0,4);
+            const dailymortalityDataTicks = countryTicksMap.slice(4);
+            return dailymortalityIndex.concat(dailymortalityDataTicks.map(dayData => {return dayData / numRegions}));
+          }) 
+         
+     
+        }
+        
+      
+      
+
   });
   return covidDataByCountries;
 }
